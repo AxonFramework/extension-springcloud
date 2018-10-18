@@ -101,7 +101,7 @@
                     <archive>
                         <manifestEntries>
                             <Automatic-Module-Name>
-                                org.axonframework.extensions.springboot
+                                org.axonframework.extensions.springcloud.springboot
                             </Automatic-Module-Name>
                         </manifestEntries>
                     </archive>
