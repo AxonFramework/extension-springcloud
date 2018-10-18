@@ -1,2 +1,3 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  org.axonframework.extensions.springcloud.autoconfig.RoutingStrategyAutoConfiguration,\
   org.axonframework.extensions.springcloud.autoconfig.SpringCloudAutoConfiguration
