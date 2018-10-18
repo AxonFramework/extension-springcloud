@@ -42,7 +42,6 @@ import org.axonframework.extensions.springcloud.commandhandling.SpringCloudHttpB
 import org.axonframework.extensions.springcloud.commandhandling.SpringHttpCommandBusConnector;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.springboot.autoconfig.InfraConfiguration;
-import org.axonframework.springboot.autoconfig.RoutingStrategyAutoConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;

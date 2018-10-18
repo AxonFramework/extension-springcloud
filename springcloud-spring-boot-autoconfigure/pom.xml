@@ -44,6 +44,13 @@
 
         <dependency>
             <groupId>org.axonframework</groupId>
+            <artifactId>axon-messaging</artifactId>
+            <version>${axon.version}</version>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.axonframework</groupId>
             <artifactId>axon-spring-boot-autoconfigure</artifactId>
             <version>${axon.version}</version>
             <optional>true</optional>
