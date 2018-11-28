@@ -122,6 +122,12 @@ public class SpringCloudCommandRouterTest {
         verify(routingStrategy).getRoutingKey(TEST_COMMAND);
     }
 
+    // reproduces issue #1 (https://github.com/AxonFramework/extension-springcloud/issues/1)
+    @Test
+    public void testPreRegistrationLocalMemberIgnoredWhenNotPresent() {
+        testSubject.resetLocalMembership(null);
+    }
+
     @Test
     public void testFindDestinationReturnsMemberForCommandMessage() {
         SimpleMember<URI> testMember = new SimpleMember<>(

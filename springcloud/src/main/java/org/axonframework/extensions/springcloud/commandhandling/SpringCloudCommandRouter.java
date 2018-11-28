@@ -31,13 +31,7 @@ import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.event.EventListener;
 
 import java.net.URI;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -167,20 +161,20 @@ public class SpringCloudCommandRouter implements CommandRouter {
     @SuppressWarnings("UnusedParameters")
     public void resetLocalMembership(InstanceRegisteredEvent event) {
         registered = true;
-        Member startUpPhaseLocalMember =
+
+        Optional<Member> startUpPhaseLocalMember =
                 atomicConsistentHash.get().getMembers().stream()
                                     .filter(Member::local)
-                                    .findFirst()
-                                    .orElseThrow(() -> new IllegalStateException(
-                                            "There should be no scenario where the local member does not exist."
-                                    ));
-
-        if (logger.isDebugEnabled()) {
-            logger.debug("Resetting local membership for [{}].", startUpPhaseLocalMember);
-        }
+                                    .findFirst();
 
         updateMemberships();
-        atomicConsistentHash.updateAndGet(consistentHash -> consistentHash.without(startUpPhaseLocalMember));
+
+        startUpPhaseLocalMember.ifPresent(m -> {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Resetting local membership for [{}].", m);
+            }
+            atomicConsistentHash.updateAndGet(consistentHash -> consistentHash.without(m));
+        });
     }
 
     /**
