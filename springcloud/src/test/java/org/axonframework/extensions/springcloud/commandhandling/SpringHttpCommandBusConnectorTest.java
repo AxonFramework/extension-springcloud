@@ -16,7 +16,12 @@
 
 package org.axonframework.extensions.springcloud.commandhandling;
 
-import org.axonframework.commandhandling.*;
+import org.axonframework.commandhandling.CommandBus;
+import org.axonframework.commandhandling.CommandCallback;
+import org.axonframework.commandhandling.CommandMessage;
+import org.axonframework.commandhandling.CommandResultMessage;
+import org.axonframework.commandhandling.GenericCommandMessage;
+import org.axonframework.commandhandling.GenericCommandResultMessage;
 import org.axonframework.commandhandling.callbacks.NoOpCallback;
 import org.axonframework.commandhandling.distributed.Member;
 import org.axonframework.commandhandling.distributed.SimpleMember;
@@ -27,13 +32,10 @@ import org.axonframework.messaging.RemoteHandlingException;
 import org.axonframework.serialization.SerializedObject;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.json.JacksonSerializer;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.*;
+import org.junit.runner.*;
+import org.mockito.*;
+import org.mockito.junit.*;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -154,8 +156,10 @@ public class SpringHttpCommandBusConnectorTest {
         assertTrue(Arrays.equals(serializedPayload.getData(), serializedObjectCaptor.getAllValues().get(0).getData()));
 
         assertEquals(serializedException.getType(), serializedObjectCaptor.getAllValues().get(1).getType());
-        assertEquals(serializedException.getContentType(), serializedObjectCaptor.getAllValues().get(1).getContentType());
-        assertTrue(Arrays.equals(serializedException.getData(), serializedObjectCaptor.getAllValues().get(1).getData()));
+        assertEquals(serializedException.getContentType(),
+                     serializedObjectCaptor.getAllValues().get(1).getContentType());
+        assertTrue(Arrays.equals(serializedException.getData(),
+                                 serializedObjectCaptor.getAllValues().get(1).getData()));
 
         assertEquals(serializedMetaData.getType(), serializedObjectCaptor.getAllValues().get(2).getType());
         assertEquals(serializedMetaData.getContentType(),
@@ -273,9 +277,17 @@ public class SpringHttpCommandBusConnectorTest {
         CommandResultMessage commandResultMessage = result.getCommandResultMessage(serializer);
         assertEquals(COMMAND_MESSAGE.getIdentifier(), result.getCommandIdentifier());
         assertTrue(commandResultMessage.isExceptional());
-        assertEquals("An exception was thrown by the remote message handling component.", commandResultMessage.exceptionResult().getMessage());
+        assertEquals(
+                "An exception was thrown by the remote message handling component: java.lang.Exception: oops",
+                commandResultMessage.exceptionResult().getMessage()
+        );
 
-        assertTrue(((RemoteHandlingException)commandResultMessage.exceptionResult()).getExceptionDescriptions().stream().anyMatch(m -> m.contains(COMMAND_ERROR.getMessage())));
+        assertTrue(
+                ((RemoteHandlingException) commandResultMessage.exceptionResult())
+                        .getExceptionDescriptions()
+                        .stream()
+                        .anyMatch(m -> m.contains(COMMAND_ERROR.getMessage()))
+        );
 
         verify(localCommandBus).dispatch(any(), any());
     }
