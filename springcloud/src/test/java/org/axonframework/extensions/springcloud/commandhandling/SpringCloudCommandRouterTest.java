@@ -563,4 +563,30 @@ public class SpringCloudCommandRouterTest {
                         })
                         .collect(toList());
     }
+
+    @Test
+    public void testBuildMemberWithContextRootPropertynameCreatesAnUriWithContextRoot() {
+
+        testSubject = SpringCloudCommandRouter.builder()
+                .discoveryClient(discoveryClient)
+                .localServiceInstance(localServiceInstance)
+                .routingStrategy(routingStrategy)
+                .serviceInstanceFilter(serviceInstance -> true)
+                .consistentHashChangeListener(ConsistentHashChangeListener.noOp())
+                .contextRootMetadataPropertyname(CONTEXT_ROOT_KEY)
+                .build();
+
+        serviceInstanceMetadata.put(CONTEXT_ROOT_KEY, "/contextRootPath");
+
+        ServiceInstance remoteInstance = mock(ServiceInstance.class);
+        when(remoteInstance.getServiceId()).thenReturn(SERVICE_INSTANCE_ID);
+        when(remoteInstance.getUri()).thenReturn(URI.create("remote"));
+        when(remoteInstance.getMetadata()).thenReturn(serviceInstanceMetadata);
+
+        Member memberWithContextRootUri = testSubject.buildMember(remoteInstance);
+
+        Optional<URI> connectionEndpoint = memberWithContextRootUri.getConnectionEndpoint(URI.class);
+        assertTrue(connectionEndpoint.isPresent());
+        assertEquals(connectionEndpoint.get().toString(), "remote/contextRootPath");
+    }
 }

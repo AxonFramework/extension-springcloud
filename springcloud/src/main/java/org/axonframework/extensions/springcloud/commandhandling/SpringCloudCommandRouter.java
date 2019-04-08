@@ -94,6 +94,7 @@ public class SpringCloudCommandRouter implements CommandRouter {
         routingStrategy = builder.routingStrategy;
         serviceInstanceFilter = builder.serviceInstanceFilter;
         consistentHashChangeListener = builder.consistentHashChangeListener;
+        contextRootMetadataPropertyname = builder.contextRootMetadataPropertyname;
     }
 
     /**
@@ -408,6 +409,7 @@ public class SpringCloudCommandRouter implements CommandRouter {
         private Predicate<ServiceInstance> serviceInstanceFilter =
                 SpringCloudCommandRouter::serviceInstanceMetadataContainsMessageRoutingInformation;
         private ConsistentHashChangeListener consistentHashChangeListener = ConsistentHashChangeListener.noOp();
+        private String contextRootMetadataPropertyname;
 
         /**
          * Sets the {@link DiscoveryClient} used to discovery and notify other nodes. Used to update its own membership
@@ -478,6 +480,16 @@ public class SpringCloudCommandRouter implements CommandRouter {
         public Builder consistentHashChangeListener(ConsistentHashChangeListener consistentHashChangeListener) {
             assertNonNull(consistentHashChangeListener, "ConsistentHashChangeListener may not be null");
             this.consistentHashChangeListener = consistentHashChangeListener;
+            return this;
+        }
+
+        /**
+         * @param contextRootMetadataPropertyname the optional name of the spring cloud service instance metdata property,
+         *                                        that does contain the contextroot path of the service.
+         * @return the current Builder instance, for fluent interfacing
+         */
+        public Builder contextRootMetadataPropertyname(String contextRootMetadataPropertyname) {
+            this.contextRootMetadataPropertyname = contextRootMetadataPropertyname;
             return this;
         }
 

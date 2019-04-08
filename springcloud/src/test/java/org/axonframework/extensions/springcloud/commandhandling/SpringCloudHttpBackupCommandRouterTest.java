@@ -102,8 +102,9 @@ public class SpringCloudHttpBackupCommandRouterTest {
                                                         .routingStrategy(routingStrategy)
                                                         .restTemplate(restTemplate)
                                                         .messageRoutingInformationEndpoint(
-                                                                messageRoutingInformationEndpoint
-                                                        ).build();
+                                                                messageRoutingInformationEndpoint)
+                                                        .contextRootMetadataPropertyname(contextRootMetadataPropertyname)
+                                                        .build();
     }
 
     @Test

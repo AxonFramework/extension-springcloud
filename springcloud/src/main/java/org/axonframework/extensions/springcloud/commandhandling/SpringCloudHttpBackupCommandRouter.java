@@ -260,6 +260,16 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
         }
 
         /**
+         * @param contextRootMetadataPropertyname the optional name of the spring cloud service instance metdata property,
+         *                                        that does contain the contextroot path of the service.
+         * @return the current Builder instance, for fluent interfacing
+         */
+        public Builder contextRootMetadataPropertyname(String contextRootMetadataPropertyname) {
+            super.contextRootMetadataPropertyname(contextRootMetadataPropertyname);
+            return this;
+        }
+
+        /**
          * Initializes a {@link SpringCloudHttpBackupCommandRouter} as specified through this Builder.
          *
          * @return a {@link SpringCloudHttpBackupCommandRouter} as specified through this Builder
