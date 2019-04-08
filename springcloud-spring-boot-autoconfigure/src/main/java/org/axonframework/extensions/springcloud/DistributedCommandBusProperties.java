@@ -121,11 +121,11 @@ public class DistributedCommandBusProperties {
          */
         private String fallbackUrl = "/message-routing-information";
 
-		/**
-		 * The optional name of the spring cloud service instance metdata property,
-		 * that does contain the contextroot path of the service.
-		 */
-		private String contextRootMetadataPropertyname;
+        /**
+         * The optional name of the spring cloud service instance metdata property,
+         * that does contain the contextroot path of the service.
+         */
+        private String contextRootMetadataPropertyname;
 
         /**
          * Indicates whether to fall back to HTTP GET when retrieving Instance Meta Data from the Discovery Server
@@ -167,20 +167,20 @@ public class DistributedCommandBusProperties {
             this.fallbackUrl = fallbackUrl;
         }
 
-		/**
-		 * @return the optional name of the spring cloud service instance metdata property,
-		 *          that does contain the contextroot path of the service.
-		 */
-		public String getContextRootMetadataPropertyname() {
-			return contextRootMetadataPropertyname;
-		}
+        /**
+         * @return the optional name of the spring cloud service instance metdata property,
+         * that does contain the contextroot path of the service.
+         */
+        public String getContextRootMetadataPropertyname() {
+            return contextRootMetadataPropertyname;
+        }
 
-		/**
-		 * @param contextRootMetadataPropertyname the optional name of the spring cloud service instance metdata property,
-		 *                                        that does contain the contextroot path of the service.
-		 */
-		public void setContextRootMetadataPropertyname(String contextRootMetadataPropertyname) {
-			this.contextRootMetadataPropertyname = contextRootMetadataPropertyname;
-		}
+        /**
+         * @param contextRootMetadataPropertyname the optional name of the spring cloud service instance metdata property,
+         *                                        that does contain the contextroot path of the service.
+         */
+        public void setContextRootMetadataPropertyname(String contextRootMetadataPropertyname) {
+            this.contextRootMetadataPropertyname = contextRootMetadataPropertyname;
+        }
     }
 }
