@@ -53,6 +53,7 @@ public class SpringCloudCommandRouterTest {
     private static final String LOAD_FACTOR_KEY = "loadFactor";
     private static final String SERIALIZED_COMMAND_FILTER_KEY = "serializedCommandFilter";
     private static final String SERIALIZED_COMMAND_FILTER_CLASS_NAME_KEY = "serializedCommandFilterClassName";
+    private static final String CONTEXT_ROOT_KEY = "contextRoot";
 
     private static final int LOAD_FACTOR = 1;
     private static final CommandMessage<Object> TEST_COMMAND = GenericCommandMessage.asCommandMessage("testCommand");

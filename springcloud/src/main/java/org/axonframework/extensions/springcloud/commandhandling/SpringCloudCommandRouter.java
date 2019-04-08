@@ -29,6 +29,7 @@ import org.springframework.cloud.client.discovery.event.HeartbeatEvent;
 import org.springframework.cloud.client.discovery.event.InstanceRegisteredEvent;
 import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.event.EventListener;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.*;
@@ -73,6 +74,7 @@ public class SpringCloudCommandRouter implements CommandRouter {
 
     private final AtomicReference<ConsistentHash> atomicConsistentHash = new AtomicReference<>(new ConsistentHash());
     private final Set<ServiceInstance> blackListedServiceInstances = new HashSet<>();
+    private final String contextRootMetadataPropertyname;
 
     private volatile boolean registered = false;
 
@@ -321,15 +323,40 @@ public class SpringCloudCommandRouter implements CommandRouter {
     }
 
     private Member buildRemoteMember(ServiceInstance remoteServiceInstance) {
-        URI remoteServiceUri = remoteServiceInstance.getUri();
-        return new SimpleMember<>(buildSimpleMemberName(remoteServiceInstance.getServiceId(), remoteServiceUri),
-                                  remoteServiceUri,
+		URI serviceWithContextRootUri = buildRemoteUriWithContextRoot(remoteServiceInstance);
+
+		return new SimpleMember<>(buildSimpleMemberName(remoteServiceInstance.getServiceId(), serviceWithContextRootUri),
+                                  serviceWithContextRootUri,
                                   SimpleMember.REMOTE_MEMBER,
                                   this::suspect);
     }
 
     private String buildSimpleMemberName(String serviceId, URI serviceUri) {
         return serviceId.toUpperCase() + "[" + serviceUri + "]";
+    }
+
+    private URI buildRemoteUriWithContextRoot(ServiceInstance serviceInstance) {
+
+        if (contextRootMetadataPropertyname == null) {
+            return serviceInstance.getUri();
+        }
+
+        if (serviceInstance.getMetadata() == null) {
+            logger.warn("A contextRootMetadataPropertyname {} has been provided, but the metadata is null. " +
+                        "Defaulting to '/' as the contextroot.", contextRootMetadataPropertyname);
+            return serviceInstance.getUri();
+        }
+
+        if (!serviceInstance.getMetadata().containsKey(contextRootMetadataPropertyname)) {
+            logger.info("The service instance metadata does not contain a property with name '{}'. " +
+                        "Defaulting to '/' as the contextroot.", contextRootMetadataPropertyname);
+            return serviceInstance.getUri();
+        }
+
+        return UriComponentsBuilder.fromUri(serviceInstance.getUri())
+                .path(serviceInstance.getMetadata().get(contextRootMetadataPropertyname))
+                .build()
+                .toUri();
     }
 
     private ConsistentHash suspect(Member member) {

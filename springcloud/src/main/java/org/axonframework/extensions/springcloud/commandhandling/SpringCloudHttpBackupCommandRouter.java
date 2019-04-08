@@ -173,7 +173,8 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
 
     private static URI buildURIForPath(URI uri, String appendToPath) {
         return UriComponentsBuilder.fromUri(uri)
-                                   .path(uri.getPath() + appendToPath)
+                                   // .path() already appends to an existing path in uri, so just enter the appendToPath here
+                                   .path(appendToPath)
                                    .build()
                                    .toUri();
     }

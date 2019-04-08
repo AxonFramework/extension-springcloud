@@ -38,6 +38,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.Collections;
@@ -66,6 +67,7 @@ public class SpringCloudHttpBackupCommandRouterTest {
     @Mock
     private RestTemplate restTemplate;
     private String messageRoutingInformationEndpoint = "/message-routing-information";
+    private String contextRootMetadataPropertyname = "contextRootPropertyname";
 
     private URI testRemoteUri = URI.create("http://remote");
     private MessageRoutingInformation expectedMessageRoutingInfo;
@@ -259,6 +261,32 @@ public class SpringCloudHttpBackupCommandRouterTest {
                                       eq(HttpMethod.GET),
                                       eq(HttpEntity.EMPTY),
                                       eq(MessageRoutingInformation.class));
+    }
+
+    @Test
+    public void testUpdateMembershipsOnHeartbeatEventRequestsMessageRoutingInformationByHttpRequestWithContextRoot() {
+        testSubject.updateMembership(LOAD_FACTOR, COMMAND_NAME_FILTER);
+
+        ServiceInstance remoteInstance = mock(ServiceInstance.class);
+        when(remoteInstance.getServiceId()).thenReturn(SERVICE_INSTANCE_ID);
+        when(remoteInstance.getUri()).thenReturn(testRemoteUri);
+        when(remoteInstance.getMetadata()).thenReturn(new HashMap<String, String>() {{
+            put(contextRootMetadataPropertyname, "/contextRootPath");
+        }});
+
+        when(discoveryClient.getServices()).thenReturn(ImmutableList.of(SERVICE_INSTANCE_ID));
+        when(discoveryClient.getInstances(SERVICE_INSTANCE_ID))
+                .thenReturn(ImmutableList.of(remoteInstance));
+
+        testSubject.updateMemberships(mock(HeartbeatEvent.class));
+
+        verify(discoveryClient).getServices();
+        verify(discoveryClient).getInstances(SERVICE_INSTANCE_ID);
+        verify(restTemplate).exchange(
+                eq(UriComponentsBuilder.fromUriString("http://remote/contextRootPath/message-routing-information").build().toUri()),
+                eq(HttpMethod.GET),
+                eq(HttpEntity.EMPTY),
+                eq(MessageRoutingInformation.class));
     }
 
     @SuppressWarnings("unchecked")
