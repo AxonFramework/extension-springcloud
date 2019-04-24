@@ -125,7 +125,7 @@ public class DistributedCommandBusProperties {
          * The optional name of the spring cloud service instance metdata property,
          * that does contain the contextroot path of the service.
          */
-        private String contextRootMetadataPropertyname;
+        private String contextRootMetadataPropertyName;
 
         /**
          * Indicates whether to fall back to HTTP GET when retrieving Instance Meta Data from the Discovery Server
@@ -168,19 +168,22 @@ public class DistributedCommandBusProperties {
         }
 
         /**
-         * @return the optional name of the spring cloud service instance metdata property,
+         * Returns the optional name of the spring cloud service instance metadata property,
+         * that does contain the contextroot path of the service.
+         *
+         * @return the optional name of the spring cloud service instance metadata property,
          * that does contain the contextroot path of the service.
          */
-        public String getContextRootMetadataPropertyname() {
-            return contextRootMetadataPropertyname;
+        public String getContextRootMetadataPropertyName() {
+            return contextRootMetadataPropertyName;
         }
 
         /**
-         * @param contextRootMetadataPropertyname the optional name of the spring cloud service instance metdata property,
+         * @param contextRootMetadataPropertyName the optional name of the spring cloud service instance metdata property,
          *                                        that does contain the contextroot path of the service.
          */
-        public void setContextRootMetadataPropertyname(String contextRootMetadataPropertyname) {
-            this.contextRootMetadataPropertyname = contextRootMetadataPropertyname;
+        public void setContextRootMetadataPropertyName(String contextRootMetadataPropertyName) {
+            this.contextRootMetadataPropertyName = contextRootMetadataPropertyName;
         }
     }
 }

@@ -98,7 +98,7 @@ public class SpringCloudAutoConfiguration {
                                                  .messageRoutingInformationEndpoint(properties.getSpringCloud()
                                                                                               .getFallbackUrl())
                                                  .contextRootMetadataPropertyname(properties.getSpringCloud()
-                                                                                            .getContextRootMetadataPropertyname())
+                                                                                            .getContextRootMetadataPropertyName())
                                                  .build();
     }
 

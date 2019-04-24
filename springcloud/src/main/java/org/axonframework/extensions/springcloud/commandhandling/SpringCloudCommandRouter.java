@@ -324,9 +324,9 @@ public class SpringCloudCommandRouter implements CommandRouter {
     }
 
     private Member buildRemoteMember(ServiceInstance remoteServiceInstance) {
-		URI serviceWithContextRootUri = buildRemoteUriWithContextRoot(remoteServiceInstance);
+        URI serviceWithContextRootUri = buildRemoteUriWithContextRoot(remoteServiceInstance);
 
-		return new SimpleMember<>(buildSimpleMemberName(remoteServiceInstance.getServiceId(), serviceWithContextRootUri),
+        return new SimpleMember<>(buildSimpleMemberName(remoteServiceInstance.getServiceId(), serviceWithContextRootUri),
                                   serviceWithContextRootUri,
                                   SimpleMember.REMOTE_MEMBER,
                                   this::suspect);
