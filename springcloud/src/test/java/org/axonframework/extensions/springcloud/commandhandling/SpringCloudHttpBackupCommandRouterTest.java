@@ -43,6 +43,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.Assert.*;
@@ -271,9 +272,9 @@ public class SpringCloudHttpBackupCommandRouterTest {
         ServiceInstance remoteInstance = mock(ServiceInstance.class);
         when(remoteInstance.getServiceId()).thenReturn(SERVICE_INSTANCE_ID);
         when(remoteInstance.getUri()).thenReturn(testRemoteUri);
-        when(remoteInstance.getMetadata()).thenReturn(new HashMap<String, String>() {{
-            put(contextRootMetadataPropertyname, "/contextRootPath");
-        }});
+        Map<String, String> metadataWithContextRootPath = new HashMap<>();
+        metadataWithContextRootPath.put(contextRootMetadataPropertyname, "/contextRootPath");
+        when(remoteInstance.getMetadata()).thenReturn(metadataWithContextRootPath);
 
         when(discoveryClient.getServices()).thenReturn(ImmutableList.of(SERVICE_INSTANCE_ID));
         when(discoveryClient.getInstances(SERVICE_INSTANCE_ID))
