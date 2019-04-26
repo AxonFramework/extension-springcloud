@@ -310,10 +310,11 @@ public class SpringCloudCommandRouter implements CommandRouter {
 
     private Member buildLocalMember(ServiceInstance localServiceInstance) {
         String localServiceId = localServiceInstance.getServiceId();
+        URI serviceWithContextRootUri = buildRemoteUriWithContextRoot(localServiceInstance);
         URI emptyEndpoint = null;
         //noinspection ConstantConditions | added null variable for clarity
         return registered
-                ? new SimpleMember<>(buildSimpleMemberName(localServiceId, localServiceInstance.getUri()),
+                ? new SimpleMember<>(buildSimpleMemberName(localServiceId, serviceWithContextRootUri),
                                      localServiceInstance.getUri(),
                                      SimpleMember.LOCAL_MEMBER,
                                      this::suspect)
