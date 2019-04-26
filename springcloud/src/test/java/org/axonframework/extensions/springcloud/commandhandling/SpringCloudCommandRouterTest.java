@@ -617,7 +617,7 @@ public class SpringCloudCommandRouterTest {
                 UriComponentsBuilder.fromUriString("remote/contextRootPath")
                         .build().toUri());
 
-        Member memberWithContextRootUri = testSubject.buildMember(localServiceInstance);
+        Member memberWithContextRootUri = testSubject.buildMember(localInstance);
 
         Optional<URI> connectionEndpoint = memberWithContextRootUri.getConnectionEndpoint(URI.class);
         assertTrue(connectionEndpoint.isPresent());
