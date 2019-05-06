@@ -173,7 +173,8 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
 
     private static URI buildURIForPath(URI uri, String appendToPath) {
         return UriComponentsBuilder.fromUri(uri)
-                                   .path(uri.getPath() + appendToPath)
+                                   // .path() already appends to an existing path in uri, so just enter the appendToPath here
+                                   .path(appendToPath)
                                    .build()
                                    .toUri();
     }
@@ -255,6 +256,16 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
             assertMessageRoutingInfoEndpoint(messageRoutingInformationEndpoint,
                                              "The messageRoutingInformationEndpoint may not be null or empty");
             this.messageRoutingInformationEndpoint = messageRoutingInformationEndpoint;
+            return this;
+        }
+
+        /**
+         * @param contextRootMetadataPropertyname the optional name of the spring cloud service instance metdata property,
+         *                                        that does contain the contextroot path of the service.
+         * @return the current Builder instance, for fluent interfacing
+         */
+        public Builder contextRootMetadataPropertyname(String contextRootMetadataPropertyname) {
+            super.contextRootMetadataPropertyname(contextRootMetadataPropertyname);
             return this;
         }
 

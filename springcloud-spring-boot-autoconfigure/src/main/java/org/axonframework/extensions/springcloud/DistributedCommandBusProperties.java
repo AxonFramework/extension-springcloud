@@ -122,6 +122,12 @@ public class DistributedCommandBusProperties {
         private String fallbackUrl = "/message-routing-information";
 
         /**
+         * The optional name of the spring cloud service instance metdata property,
+         * that does contain the contextroot path of the service.
+         */
+        private String contextRootMetadataPropertyName;
+
+        /**
          * Indicates whether to fall back to HTTP GET when retrieving Instance Meta Data from the Discovery Server
          * fails.
          *
@@ -159,6 +165,25 @@ public class DistributedCommandBusProperties {
          */
         public void setFallbackUrl(String fallbackUrl) {
             this.fallbackUrl = fallbackUrl;
+        }
+
+        /**
+         * Returns the optional name of the spring cloud service instance metadata property,
+         * that does contain the contextroot path of the service.
+         *
+         * @return the optional name of the spring cloud service instance metadata property,
+         * that does contain the contextroot path of the service.
+         */
+        public String getContextRootMetadataPropertyName() {
+            return contextRootMetadataPropertyName;
+        }
+
+        /**
+         * @param contextRootMetadataPropertyName the optional name of the spring cloud service instance metdata property,
+         *                                        that does contain the contextroot path of the service.
+         */
+        public void setContextRootMetadataPropertyName(String contextRootMetadataPropertyName) {
+            this.contextRootMetadataPropertyName = contextRootMetadataPropertyName;
         }
     }
 }
