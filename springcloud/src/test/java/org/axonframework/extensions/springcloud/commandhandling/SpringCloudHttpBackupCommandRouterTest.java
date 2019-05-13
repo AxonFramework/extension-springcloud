@@ -68,7 +68,7 @@ public class SpringCloudHttpBackupCommandRouterTest {
     @Mock
     private RestTemplate restTemplate;
     private String messageRoutingInformationEndpoint = "/message-routing-information";
-    private String contextRootMetadataPropertyname = "contextRootPropertyname";
+    private String contextRootMetadataPropertyName = "contextRootPropertyName";
 
     private URI testRemoteUri = URI.create("http://remote");
     private MessageRoutingInformation expectedMessageRoutingInfo;
@@ -104,7 +104,7 @@ public class SpringCloudHttpBackupCommandRouterTest {
                                                         .restTemplate(restTemplate)
                                                         .messageRoutingInformationEndpoint(
                                                                 messageRoutingInformationEndpoint)
-                                                        .contextRootMetadataPropertyname(contextRootMetadataPropertyname)
+                                                        .contextRootMetadataPropertyName(contextRootMetadataPropertyName)
                                                         .build();
     }
 
@@ -187,7 +187,6 @@ public class SpringCloudHttpBackupCommandRouterTest {
         assertEquals(messageRoutingInformationEndpoint, resultUri.getPath());
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testGetMessageRoutingInformationReturnsEmptyOptionalFromNonAxonServiceInstanceRequestWhichThrowsAnHttpClientErrorException() {
         ServiceInstance nonAxonInstance = mock(ServiceInstance.class);
@@ -273,7 +272,7 @@ public class SpringCloudHttpBackupCommandRouterTest {
         when(remoteInstance.getServiceId()).thenReturn(SERVICE_INSTANCE_ID);
         when(remoteInstance.getUri()).thenReturn(testRemoteUri);
         Map<String, String> metadataWithContextRootPath = new HashMap<>();
-        metadataWithContextRootPath.put(contextRootMetadataPropertyname, "/contextRootPath");
+        metadataWithContextRootPath.put(contextRootMetadataPropertyName, "/contextRootPath");
         when(remoteInstance.getMetadata()).thenReturn(metadataWithContextRootPath);
 
         when(discoveryClient.getServices()).thenReturn(ImmutableList.of(SERVICE_INSTANCE_ID));
@@ -285,7 +284,8 @@ public class SpringCloudHttpBackupCommandRouterTest {
         verify(discoveryClient).getServices();
         verify(discoveryClient).getInstances(SERVICE_INSTANCE_ID);
         verify(restTemplate).exchange(
-                eq(UriComponentsBuilder.fromUriString("http://remote/contextRootPath/message-routing-information").build().toUri()),
+                eq(UriComponentsBuilder.fromUriString("http://remote/contextRootPath/message-routing-information")
+                                       .build().toUri()),
                 eq(HttpMethod.GET),
                 eq(HttpEntity.EMPTY),
                 eq(MessageRoutingInformation.class));

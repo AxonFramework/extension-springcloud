@@ -95,10 +95,13 @@ public class SpringCloudAutoConfiguration {
                                                  .localServiceInstance(localServiceInstance)
                                                  .routingStrategy(routingStrategy)
                                                  .restTemplate(restTemplate)
-                                                 .messageRoutingInformationEndpoint(properties.getSpringCloud()
-                                                                                              .getFallbackUrl())
-                                                 .contextRootMetadataPropertyname(properties.getSpringCloud()
-                                                                                            .getContextRootMetadataPropertyName())
+                                                 .messageRoutingInformationEndpoint(
+                                                         properties.getSpringCloud().getFallbackUrl()
+                                                 )
+                                                 .contextRootMetadataPropertyName(
+                                                         properties.getSpringCloud()
+                                                                   .getContextRootMetadataPropertyName()
+                                                 )
                                                  .build();
     }
 

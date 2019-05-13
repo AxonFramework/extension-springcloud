@@ -33,7 +33,6 @@ import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.discovery.event.HeartbeatEvent;
 import org.springframework.cloud.client.discovery.event.InstanceRegisteredEvent;
 import org.springframework.cloud.client.serviceregistry.Registration;
-import org.springframework.web.util.UriBuilder;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.lang.reflect.Field;
@@ -567,16 +566,15 @@ public class SpringCloudCommandRouterTest {
     }
 
     @Test
-    public void testBuildMemberWithContextRootPropertynameCreatesAnUriWithContextRoot() {
-
+    public void testBuildMemberWithContextRootPropertyNameCreatesAnUriWithContextRoot() {
         testSubject = SpringCloudCommandRouter.builder()
-                .discoveryClient(discoveryClient)
-                .localServiceInstance(localServiceInstance)
-                .routingStrategy(routingStrategy)
-                .serviceInstanceFilter(serviceInstance -> true)
-                .consistentHashChangeListener(ConsistentHashChangeListener.noOp())
-                .contextRootMetadataPropertyname(CONTEXT_ROOT_KEY)
-                .build();
+                                              .discoveryClient(discoveryClient)
+                                              .localServiceInstance(localServiceInstance)
+                                              .routingStrategy(routingStrategy)
+                                              .serviceInstanceFilter(serviceInstance -> true)
+                                              .consistentHashChangeListener(ConsistentHashChangeListener.noOp())
+                                              .contextRootMetadataPropertyName(CONTEXT_ROOT_KEY)
+                                              .build();
 
         serviceInstanceMetadata.put(CONTEXT_ROOT_KEY, "/contextRootPath");
 
@@ -593,16 +591,15 @@ public class SpringCloudCommandRouterTest {
     }
 
     @Test
-    public void testLocalBuildMemberWithContextRootPropertynameCreatesAnUriWithContextRoot() {
-
+    public void testLocalBuildMemberWithContextRootPropertyNameCreatesAnUriWithContextRoot() {
         testSubject = SpringCloudCommandRouter.builder()
-                .discoveryClient(discoveryClient)
-                .localServiceInstance(localServiceInstance)
-                .routingStrategy(routingStrategy)
-                .serviceInstanceFilter(serviceInstance -> true)
-                .consistentHashChangeListener(ConsistentHashChangeListener.noOp())
-                .contextRootMetadataPropertyname(CONTEXT_ROOT_KEY)
-                .build();
+                                              .discoveryClient(discoveryClient)
+                                              .localServiceInstance(localServiceInstance)
+                                              .routingStrategy(routingStrategy)
+                                              .serviceInstanceFilter(serviceInstance -> true)
+                                              .consistentHashChangeListener(ConsistentHashChangeListener.noOp())
+                                              .contextRootMetadataPropertyName(CONTEXT_ROOT_KEY)
+                                              .build();
         testSubject.resetLocalMembership(null);
 
         serviceInstanceMetadata.put(CONTEXT_ROOT_KEY, "/contextRootPath");
@@ -614,14 +611,13 @@ public class SpringCloudCommandRouterTest {
 
         // the localServiceInstance has the same uri
         when(localServiceInstance.getUri()).thenReturn(
-                UriComponentsBuilder.fromUriString("remote/contextRootPath")
-                        .build().toUri());
+                UriComponentsBuilder.fromUriString("remote/contextRootPath").build().toUri());
 
         Member memberWithContextRootUri = testSubject.buildMember(localInstance);
 
         Optional<URI> connectionEndpoint = memberWithContextRootUri.getConnectionEndpoint(URI.class);
         assertTrue(connectionEndpoint.isPresent());
-        // the endpoint for the local service should get the contextroot, too:
+        // the endpoint for the local service should get the context root, too:
         assertEquals(connectionEndpoint.get().toString(), "remote/contextRootPath");
     }
 }
