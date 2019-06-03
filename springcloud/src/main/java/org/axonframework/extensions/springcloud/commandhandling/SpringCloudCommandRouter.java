@@ -148,12 +148,14 @@ public class SpringCloudCommandRouter implements CommandRouter {
     @Override
     public void updateMembership(int loadFactor, CommandMessageFilter commandFilter) {
         Map<String, String> localServiceInstanceMetadata = localServiceInstance.getMetadata();
-        localServiceInstanceMetadata.put(LOAD_FACTOR, Integer.toString(loadFactor));
-        SerializedObject<String> serializedCommandFilter = serializer.serialize(commandFilter, String.class);
-        localServiceInstanceMetadata.put(SERIALIZED_COMMAND_FILTER, serializedCommandFilter.getData());
-        localServiceInstanceMetadata.put(
-                SERIALIZED_COMMAND_FILTER_CLASS_NAME, serializedCommandFilter.getType().getName()
-        );
+        if (localServiceInstanceMetadata != null) {
+        	localServiceInstanceMetadata.put(LOAD_FACTOR, Integer.toString(loadFactor));
+        	SerializedObject<String> serializedCommandFilter = serializer.serialize(commandFilter, String.class);
+        	localServiceInstanceMetadata.put(SERIALIZED_COMMAND_FILTER, serializedCommandFilter.getData());
+        	localServiceInstanceMetadata.put(
+        			SERIALIZED_COMMAND_FILTER_CLASS_NAME, serializedCommandFilter.getType().getName()
+        			);
+        }
 
         updateMembershipForServiceInstance(localServiceInstance, atomicConsistentHash)
                 .ifPresent(consistentHashChangeListener::onConsistentHashChanged);
