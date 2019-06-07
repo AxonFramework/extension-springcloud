@@ -177,12 +177,7 @@ public class SpringCloudCommandRouterTest {
         CommandMessageFilter commandNameFilter = new CommandNameFilter(String.class.getName());
         testSubject.updateMembership(LOAD_FACTOR, commandNameFilter);
 
-        verify(consistentHashChangeListener, never()).onConsistentHashChanged(argThat(item -> item.getMembers()
-                                                                                         .stream()
-                                                                                         .map(Member::name)
-                                                                                         .anyMatch(memberName -> memberName
-                                                                                                 .contains(
-                                                                                                         SERVICE_INSTANCE_ID))));
+        verifyZeroInteractions(consistentHashChangeListener);
     }
 
     @Test
