@@ -566,7 +566,6 @@ public class SpringCloudCommandRouterTest {
                                        .serviceInstanceFilter(serviceInstance -> true)
                                        .consistentHashChangeListener(consistentHashChangeListener)
                                        .build();
-        //router.updateMembership(LOAD_FACTOR, COMMAND_NAME_FILTER);
         return router;
     }
 
