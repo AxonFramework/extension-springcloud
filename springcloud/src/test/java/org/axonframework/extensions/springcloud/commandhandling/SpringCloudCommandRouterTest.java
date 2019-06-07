@@ -183,9 +183,6 @@ public class SpringCloudCommandRouterTest {
                                                                                          .anyMatch(memberName -> memberName
                                                                                                  .contains(
                                                                                                          SERVICE_INSTANCE_ID))));
-       
-        //Returning to non-null mock for remaining tests
-        when(localServiceInstance.getMetadata()).thenReturn(serviceInstanceMetadata);
     }
 
     @Test
