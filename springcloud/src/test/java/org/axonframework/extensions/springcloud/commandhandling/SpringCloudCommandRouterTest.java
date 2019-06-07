@@ -554,14 +554,13 @@ public class SpringCloudCommandRouterTest {
     private SpringCloudCommandRouter createRouterFor(String host) {
         Registration localServiceInstance = mock(Registration.class);
         when(localServiceInstance.getUri()).thenReturn(URI.create("http://" + host));
-        SpringCloudCommandRouter router = SpringCloudCommandRouter.builder()
+        return SpringCloudCommandRouter.builder()
                                        .discoveryClient(discoveryClient)
                                        .localServiceInstance(localServiceInstance)
                                        .routingStrategy(routingStrategy)
                                        .serviceInstanceFilter(serviceInstance -> true)
                                        .consistentHashChangeListener(consistentHashChangeListener)
                                        .build();
-        return router;
     }
 
     private List<ServiceInstance> mockServiceInstances(int number) {
