@@ -135,13 +135,10 @@ public class SpringCloudCommandRouter implements CommandRouter {
      */
     public static boolean serviceInstanceMetadataContainsMessageRoutingInformation(ServiceInstance serviceInstance) {
         Map<String, String> serviceInstanceMetadata = serviceInstance.getMetadata();
-        if (serviceInstanceMetadata == null) {
-            return false;
-        } else {
-            return serviceInstanceMetadata.containsKey(LOAD_FACTOR) &&
-                    serviceInstanceMetadata.containsKey(SERIALIZED_COMMAND_FILTER) &&
-                    serviceInstanceMetadata.containsKey(SERIALIZED_COMMAND_FILTER_CLASS_NAME);
-        }
+        return serviceInstanceMetadata != null && 
+                serviceInstanceMetadata.containsKey(LOAD_FACTOR) &&
+                serviceInstanceMetadata.containsKey(SERIALIZED_COMMAND_FILTER) &&
+                serviceInstanceMetadata.containsKey(SERIALIZED_COMMAND_FILTER_CLASS_NAME);
     }
 
     @Override
