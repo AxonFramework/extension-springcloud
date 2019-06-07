@@ -168,6 +168,25 @@ public class SpringCloudCommandRouterTest {
                                                                                                  .contains(
                                                                                                          SERVICE_INSTANCE_ID))));
     }
+    
+    @Test
+    public void testUpdateMembershipUpdatesLocalServiceInstanceWhenMetadataNull() {
+        //Mocking null local service instance metadata for this test only
+        when(localServiceInstance.getMetadata()).thenReturn(null);
+        
+        CommandMessageFilter commandNameFilter = new CommandNameFilter(String.class.getName());
+        testSubject.updateMembership(LOAD_FACTOR, commandNameFilter);
+
+        verify(consistentHashChangeListener, never()).onConsistentHashChanged(argThat(item -> item.getMembers()
+                                                                                         .stream()
+                                                                                         .map(Member::name)
+                                                                                         .anyMatch(memberName -> memberName
+                                                                                                 .contains(
+                                                                                                         SERVICE_INSTANCE_ID))));
+       
+        //Returning to non-null mock for remaining tests
+        when(localServiceInstance.getMetadata()).thenReturn(serviceInstanceMetadata);
+    }
 
     @Test
     public void testUpdateMemberShipUpdatesConsistentHash() {
@@ -208,7 +227,7 @@ public class SpringCloudCommandRouterTest {
         verify(discoveryClient).getServices();
         verify(discoveryClient).getInstances(SERVICE_INSTANCE_ID);
     }
-
+    
     @Test
     public void testUpdateMembershipsOnHeartbeatEventUpdatesConsistentHash() {
         // Start up command router
@@ -543,13 +562,15 @@ public class SpringCloudCommandRouterTest {
     private SpringCloudCommandRouter createRouterFor(String host) {
         Registration localServiceInstance = mock(Registration.class);
         when(localServiceInstance.getUri()).thenReturn(URI.create("http://" + host));
-        return SpringCloudCommandRouter.builder()
+        SpringCloudCommandRouter router = SpringCloudCommandRouter.builder()
                                        .discoveryClient(discoveryClient)
                                        .localServiceInstance(localServiceInstance)
                                        .routingStrategy(routingStrategy)
                                        .serviceInstanceFilter(serviceInstance -> true)
                                        .consistentHashChangeListener(consistentHashChangeListener)
                                        .build();
+        //router.updateMembership(LOAD_FACTOR, COMMAND_NAME_FILTER);
+        return router;
     }
 
     private List<ServiceInstance> mockServiceInstances(int number) {
