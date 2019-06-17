@@ -168,6 +168,17 @@ public class SpringCloudCommandRouterTest {
                                                                                                  .contains(
                                                                                                          SERVICE_INSTANCE_ID))));
     }
+    
+    @Test
+    public void testUpdateMembershipUpdatesLocalServiceInstanceWhenMetadataNull() {
+        //Mocking null local service instance metadata for this test only
+        when(localServiceInstance.getMetadata()).thenReturn(null);
+        
+        CommandMessageFilter commandNameFilter = new CommandNameFilter(String.class.getName());
+        testSubject.updateMembership(LOAD_FACTOR, commandNameFilter);
+
+        verifyZeroInteractions(consistentHashChangeListener);
+    }
 
     @Test
     public void testUpdateMemberShipUpdatesConsistentHash() {
@@ -208,7 +219,7 @@ public class SpringCloudCommandRouterTest {
         verify(discoveryClient).getServices();
         verify(discoveryClient).getInstances(SERVICE_INSTANCE_ID);
     }
-
+    
     @Test
     public void testUpdateMembershipsOnHeartbeatEventUpdatesConsistentHash() {
         // Start up command router
