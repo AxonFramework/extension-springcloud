@@ -16,7 +16,13 @@
 package org.axonframework.extensions.springcloud.commandhandling;
 
 import org.axonframework.commandhandling.CommandMessage;
-import org.axonframework.commandhandling.distributed.*;
+import org.axonframework.commandhandling.distributed.CommandMessageFilter;
+import org.axonframework.commandhandling.distributed.CommandRouter;
+import org.axonframework.commandhandling.distributed.ConsistentHash;
+import org.axonframework.commandhandling.distributed.ConsistentHashChangeListener;
+import org.axonframework.commandhandling.distributed.Member;
+import org.axonframework.commandhandling.distributed.RoutingStrategy;
+import org.axonframework.commandhandling.distributed.SimpleMember;
 import org.axonframework.common.AxonConfigurationException;
 import org.axonframework.serialization.SerializedObject;
 import org.axonframework.serialization.SimpleSerializedObject;
@@ -32,7 +38,13 @@ import org.springframework.context.event.EventListener;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -123,7 +135,8 @@ public class SpringCloudCommandRouter implements CommandRouter {
      */
     public static boolean serviceInstanceMetadataContainsMessageRoutingInformation(ServiceInstance serviceInstance) {
         Map<String, String> serviceInstanceMetadata = serviceInstance.getMetadata();
-        return serviceInstanceMetadata.containsKey(LOAD_FACTOR) &&
+        return serviceInstanceMetadata != null && 
+                serviceInstanceMetadata.containsKey(LOAD_FACTOR) &&
                 serviceInstanceMetadata.containsKey(SERIALIZED_COMMAND_FILTER) &&
                 serviceInstanceMetadata.containsKey(SERIALIZED_COMMAND_FILTER_CLASS_NAME);
     }
@@ -136,12 +149,14 @@ public class SpringCloudCommandRouter implements CommandRouter {
     @Override
     public void updateMembership(int loadFactor, CommandMessageFilter commandFilter) {
         Map<String, String> localServiceInstanceMetadata = localServiceInstance.getMetadata();
-        localServiceInstanceMetadata.put(LOAD_FACTOR, Integer.toString(loadFactor));
-        SerializedObject<String> serializedCommandFilter = serializer.serialize(commandFilter, String.class);
-        localServiceInstanceMetadata.put(SERIALIZED_COMMAND_FILTER, serializedCommandFilter.getData());
-        localServiceInstanceMetadata.put(
+        if (localServiceInstanceMetadata != null) {
+            localServiceInstanceMetadata.put(LOAD_FACTOR, Integer.toString(loadFactor));
+            SerializedObject<String> serializedCommandFilter = serializer.serialize(commandFilter, String.class);
+            localServiceInstanceMetadata.put(SERIALIZED_COMMAND_FILTER, serializedCommandFilter.getData());
+            localServiceInstanceMetadata.put(
                 SERIALIZED_COMMAND_FILTER_CLASS_NAME, serializedCommandFilter.getType().getName()
-        );
+            );
+        }
 
         updateMembershipForServiceInstance(localServiceInstance, atomicConsistentHash)
                 .ifPresent(consistentHashChangeListener::onConsistentHashChanged);
@@ -327,7 +342,8 @@ public class SpringCloudCommandRouter implements CommandRouter {
     private Member buildRemoteMember(ServiceInstance remoteServiceInstance) {
         URI serviceWithContextRootUri = buildRemoteUriWithContextRoot(remoteServiceInstance);
 
-        return new SimpleMember<>(buildSimpleMemberName(remoteServiceInstance.getServiceId(), serviceWithContextRootUri),
+        return new SimpleMember<>(buildSimpleMemberName(remoteServiceInstance.getServiceId(),
+                                                        serviceWithContextRootUri),
                                   serviceWithContextRootUri,
                                   SimpleMember.REMOTE_MEMBER,
                                   this::suspect);
@@ -338,27 +354,26 @@ public class SpringCloudCommandRouter implements CommandRouter {
     }
 
     private URI buildRemoteUriWithContextRoot(ServiceInstance serviceInstance) {
-
         if (contextRootMetadataPropertyname == null) {
             return serviceInstance.getUri();
         }
 
         if (serviceInstance.getMetadata() == null) {
-            logger.warn("A contextRootMetadataPropertyname {} has been provided, but the metadata is null. " +
-                        "Defaulting to '/' as the contextroot.", contextRootMetadataPropertyname);
+            logger.warn("A contextRootMetadataPropertyName [{}] has been provided, but the metadata is null. " +
+                                "Defaulting to '/' as the context root.", contextRootMetadataPropertyname);
             return serviceInstance.getUri();
         }
 
         if (!serviceInstance.getMetadata().containsKey(contextRootMetadataPropertyname)) {
             logger.info("The service instance metadata does not contain a property with name '{}'. " +
-                        "Defaulting to '/' as the contextroot.", contextRootMetadataPropertyname);
+                                "Defaulting to '/' as the context root.", contextRootMetadataPropertyname);
             return serviceInstance.getUri();
         }
 
         return UriComponentsBuilder.fromUri(serviceInstance.getUri())
-                .path(serviceInstance.getMetadata().get(contextRootMetadataPropertyname))
-                .build()
-                .toUri();
+                                   .path(serviceInstance.getMetadata().get(contextRootMetadataPropertyname))
+                                   .build()
+                                   .toUri();
     }
 
     private ConsistentHash suspect(Member member) {
@@ -485,12 +500,16 @@ public class SpringCloudCommandRouter implements CommandRouter {
         }
 
         /**
-         * @param contextRootMetadataPropertyname the optional name of the spring cloud service instance metdata property,
-         *                                        that does contain the contextroot path of the service.
+         * Sets a property key to be expected in the {@link ServiceInstance#getMetadata()} returned object, defining the
+         * context root for the given {@link ServiceInstance}. Will be used to correctly configure the URI of a
+         * {@link Member}. Will default to {@code null}.
+         *
+         * @param contextRootMetadataPropertyName the optional metadata property field of a {@link ServiceInstance}
+         *                                        that contains the context root path of the service in question
          * @return the current Builder instance, for fluent interfacing
          */
-        public Builder contextRootMetadataPropertyname(String contextRootMetadataPropertyname) {
-            this.contextRootMetadataPropertyname = contextRootMetadataPropertyname;
+        public Builder contextRootMetadataPropertyName(String contextRootMetadataPropertyName) {
+            this.contextRootMetadataPropertyname = contextRootMetadataPropertyName;
             return this;
         }
 

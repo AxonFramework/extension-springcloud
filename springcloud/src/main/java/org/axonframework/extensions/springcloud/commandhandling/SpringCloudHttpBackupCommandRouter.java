@@ -159,21 +159,25 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
 
             return Optional.ofNullable(responseEntity.getBody());
         } catch (HttpClientErrorException e) {
-            logger.info("Blacklisting Service [" + serviceInstance.getServiceId() + "], "
-                + "as requesting message routing information from it resulted in an exception.",
-                logger.isDebugEnabled() ? e : null);
+            logger.info(
+                    "Blacklisting Service [" + serviceInstance.getServiceId() + "], "
+                            + "as requesting message routing information from it resulted in an exception.",
+                    logger.isDebugEnabled() ? e : null
+            );
             return Optional.empty();
         } catch (Exception e) {
-            logger.info("Failed to receive message routing information from Service ["
-                                + serviceInstance.getServiceId() + "] due to an exception. "
-                                + "Will temporarily set this instance to deny all incoming messages", logger.isDebugEnabled()?e:null);
+            logger.info(
+                    "Failed to receive message routing information from Service ["
+                            + serviceInstance.getServiceId() + "] due to an exception. "
+                            + "Will temporarily set this instance to deny all incoming messages",
+                    logger.isDebugEnabled() ? e : null
+            );
             return Optional.of(unreachableService);
         }
     }
 
     private static URI buildURIForPath(URI uri, String appendToPath) {
         return UriComponentsBuilder.fromUri(uri)
-                                   // .path() already appends to an existing path in uri, so just enter the appendToPath here
                                    .path(appendToPath)
                                    .build()
                                    .toUri();
@@ -229,6 +233,12 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
             return this;
         }
 
+        @Override
+        public Builder contextRootMetadataPropertyName(String contextRootMetadataPropertyName) {
+            super.contextRootMetadataPropertyName(contextRootMetadataPropertyName);
+            return this;
+        }
+
         /**
          * Sets the {@link RestTemplate} used as the backup mechanism to request another member's
          * {@link MessageRoutingInformation} with.
@@ -256,16 +266,6 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
             assertMessageRoutingInfoEndpoint(messageRoutingInformationEndpoint,
                                              "The messageRoutingInformationEndpoint may not be null or empty");
             this.messageRoutingInformationEndpoint = messageRoutingInformationEndpoint;
-            return this;
-        }
-
-        /**
-         * @param contextRootMetadataPropertyname the optional name of the spring cloud service instance metdata property,
-         *                                        that does contain the contextroot path of the service.
-         * @return the current Builder instance, for fluent interfacing
-         */
-        public Builder contextRootMetadataPropertyname(String contextRootMetadataPropertyname) {
-            super.contextRootMetadataPropertyname(contextRootMetadataPropertyname);
             return this;
         }
 
