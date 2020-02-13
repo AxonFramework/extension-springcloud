@@ -40,7 +40,10 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static java.util.Collections.singletonMap;
 import static org.axonframework.commandhandling.GenericCommandResultMessage.asCommandResultMessage;
@@ -115,6 +118,45 @@ public class SpringHttpCommandBusConnectorTest {
         SimpleMember<String> faultyDestination = new SimpleMember<>(MEMBER_NAME, null, false, null);
         testSubject.send(faultyDestination, COMMAND_MESSAGE);
         verify(executor).execute(any());
+    }
+
+    @Test
+    public void testStopSendingCommands() throws InterruptedException, ExecutionException, TimeoutException {
+        SpringHttpReplyMessage<String> testReplyMessage =
+                new SpringHttpReplyMessage<>(COMMAND_MESSAGE.getIdentifier(), COMMAND_RESULT, serializer);
+        ResponseEntity<SpringHttpReplyMessage<String>> testResponseEntity =
+                new ResponseEntity<>(testReplyMessage, HttpStatus.OK);
+        when(restTemplate.exchange(eq(expectedUri),
+                                   eq(HttpMethod.POST),
+                                   any(),
+                                   argThat(new ParameterizedTypeReferenceMatcher<String>()))
+        ).thenAnswer(invocationOnMock -> {
+            Thread.sleep(200);
+            return testResponseEntity;
+        });
+        testSubject.send(DESTINATION, COMMAND_MESSAGE, commandCallback);
+
+        testSubject.stopSendingCommands().get(400, TimeUnit.MILLISECONDS);
+
+        try {
+            testSubject.send(DESTINATION, COMMAND_MESSAGE, commandCallback);
+            fail("Expected sending new commands to fail once connector is stopped.");
+        } catch (IllegalStateException e) {
+            // expected
+        }
+
+        //noinspection unchecked
+        ArgumentCaptor<CommandMessage<? extends String>> commandMessageArgumentCaptor =
+                ArgumentCaptor.forClass(CommandMessage.class);
+        //noinspection unchecked
+        ArgumentCaptor<CommandResultMessage<? extends String>> commandResultMessageArgumentCaptor =
+                ArgumentCaptor.forClass(CommandResultMessage.class);
+        verify(commandCallback).onResult(commandMessageArgumentCaptor.capture(),
+                                         commandResultMessageArgumentCaptor.capture());
+        assertEquals(COMMAND_MESSAGE.getMetaData(), commandMessageArgumentCaptor.getValue().getMetaData());
+        assertEquals(COMMAND_MESSAGE.getPayload(), commandMessageArgumentCaptor.getValue().getPayload());
+        assertEquals(COMMAND_RESULT.getMetaData(), commandResultMessageArgumentCaptor.getValue().getMetaData());
+        assertEquals(COMMAND_RESULT.getPayload(), commandResultMessageArgumentCaptor.getValue().getPayload());
     }
 
     @Test

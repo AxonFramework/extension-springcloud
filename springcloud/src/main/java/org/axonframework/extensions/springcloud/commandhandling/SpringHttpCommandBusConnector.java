@@ -41,8 +41,10 @@ import org.springframework.web.client.RestOperations;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 
 import static org.axonframework.commandhandling.GenericCommandResultMessage.asCommandResultMessage;
@@ -65,6 +67,7 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
 
     private static final Logger logger = LoggerFactory.getLogger(SpringHttpCommandBusConnector.class);
 
+    private volatile boolean shuttingDown = false;
     private static final boolean EXPECT_REPLY = true;
     private static final boolean DO_NOT_EXPECT_REPLY = false;
     private static final String COMMAND_BUS_CONNECTOR_PATH = "/spring-command-bus-connector/command";
@@ -73,6 +76,7 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
     private final RestOperations restOperations;
     private final Serializer serializer;
     private final Executor executor;
+    private final List<CompletableFuture<Void>> pendingCommands = new CopyOnWriteArrayList<>();
 
     /**
      * Instantiate a {@link SpringHttpCommandBusConnector} based on the fields contained in the {@link Builder}.
@@ -106,29 +110,51 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
 
     @Override
     public <C> void send(Member destination, CommandMessage<? extends C> commandMessage) {
+        checkShuttingDown();
         if (destination.local()) {
             localCommandBus.dispatch(commandMessage);
         } else {
-            executor.execute(() -> {
-                sendRemotely(destination, commandMessage, DO_NOT_EXPECT_REPLY);
-            });
+            executor.execute(() -> sendRemotely(destination, commandMessage, DO_NOT_EXPECT_REPLY));
         }
     }
 
     @Override
     public <C, R> void send(Member destination, CommandMessage<C> commandMessage,
                             CommandCallback<? super C, R> callback) {
+        checkShuttingDown();
+        CompletableFuture<Void> pendingCommand = new CompletableFuture<>();
+        pendingCommands.add(pendingCommand);
         if (destination.local()) {
-            localCommandBus.dispatch(commandMessage, callback);
+            CommandCallback<C, R> wrapper = (cm, crm) -> {
+                callback.onResult(cm, crm);
+                pendingCommand.complete(null);
+                pendingCommands.remove(pendingCommand);
+            };
+            localCommandBus.dispatch(commandMessage, wrapper);
         } else {
             executor.execute(() -> {
                 SpringHttpReplyMessage<R> replyMessage =
                         this.<C, R>sendRemotely(destination, commandMessage, EXPECT_REPLY).getBody();
+                pendingCommand.complete(null);
+                pendingCommands.remove(pendingCommand);
                 if (replyMessage != null) {
                     callback.onResult(commandMessage, replyMessage.getCommandResultMessage(serializer));
                 }
             });
         }
+    }
+
+    private void checkShuttingDown() {
+        if (shuttingDown) {
+            throw new IllegalStateException(
+                    "SpringHttpCommandBussConnector is shutting down, no new commands will be sent.");
+        }
+    }
+
+    @Override
+    public CompletableFuture<Void> stopSendingCommands() {
+        shuttingDown = true;
+        return CompletableFuture.allOf(pendingCommands.toArray(new CompletableFuture[0]));
     }
 
     /**
