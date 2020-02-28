@@ -24,6 +24,9 @@ import org.axonframework.commandhandling.distributed.Member;
 import org.axonframework.common.AxonConfigurationException;
 import org.axonframework.common.DirectExecutor;
 import org.axonframework.common.Registration;
+import org.axonframework.lifecycle.Phase;
+import org.axonframework.lifecycle.ShutdownLatch;
+import org.axonframework.lifecycle.StartHandler;
 import org.axonframework.messaging.MessageHandler;
 import org.axonframework.messaging.MessageHandlerInterceptor;
 import org.axonframework.serialization.Serializer;
@@ -67,7 +70,6 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
 
     private static final Logger logger = LoggerFactory.getLogger(SpringHttpCommandBusConnector.class);
 
-    private volatile boolean shuttingDown = false;
     private static final boolean EXPECT_REPLY = true;
     private static final boolean DO_NOT_EXPECT_REPLY = false;
     private static final String COMMAND_BUS_CONNECTOR_PATH = "/spring-command-bus-connector/command";
@@ -76,7 +78,7 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
     private final RestOperations restOperations;
     private final Serializer serializer;
     private final Executor executor;
-    private final List<CompletableFuture<Void>> pendingCommands = new CopyOnWriteArrayList<>();
+    private final ShutdownLatch shutdownLatch = new ShutdownLatch();
 
     /**
      * Instantiate a {@link SpringHttpCommandBusConnector} based on the fields contained in the {@link Builder}.
@@ -95,6 +97,11 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
         this.executor = builder.executor;
     }
 
+    @StartHandler(phase = Phase.EXTERNAL_CONNECTIONS)
+    public void start() {
+        shutdownLatch.initialize();
+    }
+
     /**
      * Instantiate a Builder to be able to create a {@link SpringHttpCommandBusConnector}.
      * <p>
@@ -110,7 +117,7 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
 
     @Override
     public <C> void send(Member destination, CommandMessage<? extends C> commandMessage) {
-        checkShuttingDown();
+        shutdownLatch.ifShuttingDown("JGroupsConnector is shutting down, no new commands will be sent.");
         if (destination.local()) {
             localCommandBus.dispatch(commandMessage);
         } else {
@@ -121,22 +128,19 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
     @Override
     public <C, R> void send(Member destination, CommandMessage<C> commandMessage,
                             CommandCallback<? super C, R> callback) {
-        checkShuttingDown();
-        CompletableFuture<Void> pendingCommand = new CompletableFuture<>();
-        pendingCommands.add(pendingCommand);
+        shutdownLatch.ifShuttingDown("JGroupsConnector is shutting down, no new commands will be sent.");
+        ShutdownLatch.ActivityHandle activityHandle = shutdownLatch.registerActivity();
         if (destination.local()) {
             CommandCallback<C, R> wrapper = (cm, crm) -> {
                 callback.onResult(cm, crm);
-                pendingCommand.complete(null);
-                pendingCommands.remove(pendingCommand);
+                activityHandle.end();
             };
             localCommandBus.dispatch(commandMessage, wrapper);
         } else {
             executor.execute(() -> {
                 SpringHttpReplyMessage<R> replyMessage =
                         this.<C, R>sendRemotely(destination, commandMessage, EXPECT_REPLY).getBody();
-                pendingCommand.complete(null);
-                pendingCommands.remove(pendingCommand);
+                activityHandle.end();
                 if (replyMessage != null) {
                     callback.onResult(commandMessage, replyMessage.getCommandResultMessage(serializer));
                 }
@@ -144,17 +148,9 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
         }
     }
 
-    private void checkShuttingDown() {
-        if (shuttingDown) {
-            throw new IllegalStateException(
-                    "SpringHttpCommandBussConnector is shutting down, no new commands will be sent.");
-        }
-    }
-
     @Override
-    public CompletableFuture<Void> stopSendingCommands() {
-        shuttingDown = true;
-        return CompletableFuture.allOf(pendingCommands.toArray(new CompletableFuture[0]));
+    public CompletableFuture<Void> initiateShutdown() {
+        return shutdownLatch.initiateShutdown();
     }
 
     /**

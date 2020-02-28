@@ -21,6 +21,7 @@ import org.axonframework.commandhandling.callbacks.NoOpCallback;
 import org.axonframework.commandhandling.distributed.Member;
 import org.axonframework.commandhandling.distributed.SimpleMember;
 import org.axonframework.common.DirectExecutor;
+import org.axonframework.lifecycle.ShutdownInProgressException;
 import org.axonframework.messaging.MessageHandler;
 import org.axonframework.messaging.RemoteExceptionDescription;
 import org.axonframework.messaging.RemoteHandlingException;
@@ -98,6 +99,7 @@ public class SpringHttpCommandBusConnectorTest {
                                                    .serializer(serializer)
                                                    .executor(executor)
                                                    .build();
+        testSubject.start();
     }
 
     @Test
@@ -136,12 +138,12 @@ public class SpringHttpCommandBusConnectorTest {
         });
         testSubject.send(DESTINATION, COMMAND_MESSAGE, commandCallback);
 
-        testSubject.stopSendingCommands().get(400, TimeUnit.MILLISECONDS);
+        testSubject.initiateShutdown().get(400, TimeUnit.MILLISECONDS);
 
         try {
             testSubject.send(DESTINATION, COMMAND_MESSAGE, commandCallback);
             fail("Expected sending new commands to fail once connector is stopped.");
-        } catch (IllegalStateException e) {
+        } catch (ShutdownInProgressException e) {
             // expected
         }
 
