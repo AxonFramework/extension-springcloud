@@ -97,6 +97,9 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
         this.executor = builder.executor;
     }
 
+    /**
+     * Start the Connector.
+     */
     @StartHandler(phase = Phase.EXTERNAL_CONNECTIONS)
     public void start() {
         shutdownLatch.initialize();
