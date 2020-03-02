@@ -24,6 +24,9 @@ import org.axonframework.commandhandling.distributed.Member;
 import org.axonframework.common.AxonConfigurationException;
 import org.axonframework.common.DirectExecutor;
 import org.axonframework.common.Registration;
+import org.axonframework.lifecycle.Phase;
+import org.axonframework.lifecycle.ShutdownLatch;
+import org.axonframework.lifecycle.StartHandler;
 import org.axonframework.messaging.MessageHandler;
 import org.axonframework.messaging.MessageHandlerInterceptor;
 import org.axonframework.serialization.Serializer;
@@ -73,6 +76,7 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
     private final RestOperations restOperations;
     private final Serializer serializer;
     private final Executor executor;
+    private final ShutdownLatch shutdownLatch = new ShutdownLatch();
 
     /**
      * Instantiate a {@link SpringHttpCommandBusConnector} based on the fields contained in the {@link Builder}.
@@ -92,6 +96,14 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
     }
 
     /**
+     * Start the Connector.
+     */
+    @StartHandler(phase = Phase.EXTERNAL_CONNECTIONS)
+    public void start() {
+        shutdownLatch.initialize();
+    }
+
+    /**
      * Instantiate a Builder to be able to create a {@link SpringHttpCommandBusConnector}.
      * <p>
      * The {@link Executor} is defaulted to a {@link DirectExecutor#INSTANCE}. The {@code localCommandBus} of type
@@ -106,6 +118,7 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
 
     @Override
     public <C> void send(Member destination, CommandMessage<? extends C> commandMessage) {
+        shutdownLatch.ifShuttingDown("JGroupsConnector is shutting down, no new commands will be sent.");
         if (destination.local()) {
             localCommandBus.dispatch(commandMessage);
         } else {
@@ -117,17 +130,29 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
     public <C, R> void send(Member destination,
                             CommandMessage<C> commandMessage,
                             CommandCallback<? super C, R> callback) {
+        shutdownLatch.ifShuttingDown("JGroupsConnector is shutting down, no new commands will be sent.");
+        ShutdownLatch.ActivityHandle activityHandle = shutdownLatch.registerActivity();
         if (destination.local()) {
-            localCommandBus.dispatch(commandMessage, callback);
+            CommandCallback<C, R> wrapper = (cm, crm) -> {
+                callback.onResult(cm, crm);
+                activityHandle.end();
+            };
+            localCommandBus.dispatch(commandMessage, wrapper);
         } else {
             executor.execute(() -> {
                 SpringHttpReplyMessage<R> replyMessage =
                         this.<C, R>sendRemotely(destination, commandMessage, EXPECT_REPLY).getBody();
+                activityHandle.end();
                 if (replyMessage != null) {
                     callback.onResult(commandMessage, replyMessage.getCommandResultMessage(serializer));
                 }
             });
         }
+    }
+
+    @Override
+    public CompletableFuture<Void> initiateShutdown() {
+        return shutdownLatch.initiateShutdown();
     }
 
     /**
