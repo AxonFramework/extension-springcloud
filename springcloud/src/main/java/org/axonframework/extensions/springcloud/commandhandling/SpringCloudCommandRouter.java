@@ -135,7 +135,7 @@ public class SpringCloudCommandRouter implements CommandRouter {
      */
     public static boolean serviceInstanceMetadataContainsMessageRoutingInformation(ServiceInstance serviceInstance) {
         Map<String, String> serviceInstanceMetadata = serviceInstance.getMetadata();
-        return serviceInstanceMetadata != null && 
+        return serviceInstanceMetadata != null &&
                 serviceInstanceMetadata.containsKey(LOAD_FACTOR) &&
                 serviceInstanceMetadata.containsKey(SERIALIZED_COMMAND_FILTER) &&
                 serviceInstanceMetadata.containsKey(SERIALIZED_COMMAND_FILTER_CLASS_NAME);
@@ -325,15 +325,14 @@ public class SpringCloudCommandRouter implements CommandRouter {
 
     private Member buildLocalMember(ServiceInstance localServiceInstance) {
         String localServiceId = localServiceInstance.getServiceId();
-        URI serviceWithContextRootUri = buildRemoteUriWithContextRoot(localServiceInstance);
         URI emptyEndpoint = null;
         //noinspection ConstantConditions | added null variable for clarity
         return registered
-                ? new SimpleMember<>(buildSimpleMemberName(localServiceId, serviceWithContextRootUri),
+                ? new SimpleMember<>(buildSimpleMemberName(localServiceId, buildRemoteUriWithContextRoot(localServiceInstance).toString()),
                                      localServiceInstance.getUri(),
                                      SimpleMember.LOCAL_MEMBER,
                                      this::suspect)
-                : new SimpleMember<>(localServiceId.toUpperCase() + "[LOCAL]",
+                : new SimpleMember<>(buildSimpleMemberName(localServiceId, "LOCAL"),
                                      emptyEndpoint,
                                      SimpleMember.LOCAL_MEMBER,
                                      this::suspect);
@@ -343,13 +342,13 @@ public class SpringCloudCommandRouter implements CommandRouter {
         URI serviceWithContextRootUri = buildRemoteUriWithContextRoot(remoteServiceInstance);
 
         return new SimpleMember<>(buildSimpleMemberName(remoteServiceInstance.getServiceId(),
-                                                        serviceWithContextRootUri),
+                                                        serviceWithContextRootUri.toString()),
                                   serviceWithContextRootUri,
                                   SimpleMember.REMOTE_MEMBER,
                                   this::suspect);
     }
 
-    private String buildSimpleMemberName(String serviceId, URI serviceUri) {
+    private String buildSimpleMemberName(String serviceId, String serviceUri) {
         return serviceId.toUpperCase() + "[" + serviceUri + "]";
     }
 
