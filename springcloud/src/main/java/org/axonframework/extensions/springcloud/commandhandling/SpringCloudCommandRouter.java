@@ -328,11 +328,11 @@ public class SpringCloudCommandRouter implements CommandRouter {
         URI emptyEndpoint = null;
         //noinspection ConstantConditions | added null variable for clarity
         return registered
-                ? new SimpleMember<>(buildSimpleMemberName(localServiceId, buildRemoteUriWithContextRoot(localServiceInstance).toString()),
+                ? new SimpleMember<>(buildSimpleMemberName(localServiceId, buildRemoteUriWithContextRoot(localServiceInstance)),
                                      localServiceInstance.getUri(),
                                      SimpleMember.LOCAL_MEMBER,
                                      this::suspect)
-                : new SimpleMember<>(buildSimpleMemberName(localServiceId, "LOCAL"),
+                : new SimpleMember<>(localServiceId.toUpperCase() + "[LOCAL]",
                                      emptyEndpoint,
                                      SimpleMember.LOCAL_MEMBER,
                                      this::suspect);
@@ -342,13 +342,13 @@ public class SpringCloudCommandRouter implements CommandRouter {
         URI serviceWithContextRootUri = buildRemoteUriWithContextRoot(remoteServiceInstance);
 
         return new SimpleMember<>(buildSimpleMemberName(remoteServiceInstance.getServiceId(),
-                                                        serviceWithContextRootUri.toString()),
+                                                        serviceWithContextRootUri),
                                   serviceWithContextRootUri,
                                   SimpleMember.REMOTE_MEMBER,
                                   this::suspect);
     }
 
-    private String buildSimpleMemberName(String serviceId, String serviceUri) {
+    private String buildSimpleMemberName(String serviceId, URI serviceUri) {
         return serviceId.toUpperCase() + "[" + serviceUri + "]";
     }
 
