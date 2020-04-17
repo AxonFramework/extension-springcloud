@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2010-2018. Axon Framework
+ * Copyright (c) 2010-2020. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,6 +24,7 @@ import org.axonframework.commandhandling.CommandResultMessage;
 import org.axonframework.commandhandling.GenericCommandMessage;
 import org.axonframework.commandhandling.GenericCommandResultMessage;
 import org.axonframework.commandhandling.callbacks.NoOpCallback;
+import org.axonframework.commandhandling.distributed.CommandDispatchException;
 import org.axonframework.commandhandling.distributed.Member;
 import org.axonframework.commandhandling.distributed.SimpleMember;
 import org.axonframework.common.DirectExecutor;
@@ -34,10 +35,13 @@ import org.axonframework.messaging.RemoteHandlingException;
 import org.axonframework.serialization.SerializedObject;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.json.JacksonSerializer;
-import org.junit.*;
-import org.junit.runner.*;
-import org.mockito.*;
-import org.mockito.junit.*;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatcher;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -46,17 +50,31 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
-import java.util.Arrays;
-import java.util.concurrent.ExecutionException;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Collections.singletonMap;
 import static org.axonframework.commandhandling.GenericCommandResultMessage.asCommandResultMessage;
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.argThat;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class SpringHttpCommandBusConnectorTest {
@@ -275,11 +293,47 @@ public class SpringHttpCommandBusConnectorTest {
         assertTrue(commandResultMessageCaptor.getValue().isExceptional());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
+    public void testSendWithCallbackSucceedsAndFailsOnParsingResultMessage() {
+        SpringHttpReplyMessage<String> testReplyMessage =
+                new SpringHttpReplyMessage<>(COMMAND_MESSAGE.getIdentifier(),
+                                             asCommandResultMessage(COMMAND_ERROR),
+                                             serializer);
+        ResponseEntity<SpringHttpReplyMessage<String>> testResponseEntity =
+                new ResponseEntity<>(testReplyMessage, HttpStatus.OK);
+        when(restTemplate.exchange(eq(expectedUri),
+                                   eq(HttpMethod.POST),
+                                   any(),
+                                   argThat(new ParameterizedTypeReferenceMatcher<String>()))
+        ).thenReturn(testResponseEntity);
+        doThrow(new RuntimeException("Mocking deserialization exception")).when(serializer).deserialize(any());
+
+        testSubject.send(DESTINATION, COMMAND_MESSAGE, commandCallback);
+
+        verify(executor).execute(any());
+        verify(serializer).serialize(COMMAND_MESSAGE.getMetaData(), byte[].class);
+        verify(serializer).serialize(COMMAND_MESSAGE.getPayload(), byte[].class);
+
+        HttpEntity<SpringHttpDispatchMessage<String>> expectedHttpEntity = new HttpEntity<>(buildDispatchMessage(true));
+        verify(restTemplate).exchange(eq(expectedUri), eq(HttpMethod.POST), eq(expectedHttpEntity),
+                                      argThat(new ParameterizedTypeReferenceMatcher<>()));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<CommandResultMessage<String>> commandResultMessageCaptor =
+                ArgumentCaptor.forClass(CommandResultMessage.class);
+        verify(commandCallback).onResult(eq(COMMAND_MESSAGE), commandResultMessageCaptor.capture());
+        assertTrue(commandResultMessageCaptor.getValue().isExceptional());
+        assertEquals(CommandDispatchException.class, commandResultMessageCaptor.getValue().exceptionResult().getClass());
+    }
+
+    @Test
     public void testSendWithCallbackThrowsExceptionForMissingDestinationURI() {
         SimpleMember<String> faultyDestination = new SimpleMember<>(MEMBER_NAME, null, false, null);
-        testSubject.send(faultyDestination, COMMAND_MESSAGE, new NoOpCallback());
+        AtomicReference<CommandResultMessage<?>> result = new AtomicReference<>();
+        testSubject.send(faultyDestination, COMMAND_MESSAGE, (c, r) -> result.set(r));
         verify(executor).execute(any());
+        assertTrue(result.get().exceptionResult() instanceof CommandDispatchException);
+        assertTrue(result.get().exceptionResult().getCause() instanceof IllegalArgumentException);
     }
 
     @Test
@@ -418,7 +472,7 @@ public class SpringHttpCommandBusConnectorTest {
     private static class ParameterizedTypeReferenceMatcher<R> implements
             ArgumentMatcher<ParameterizedTypeReference<SpringHttpReplyMessage<R>>> {
 
-        private ParameterizedTypeReference<SpringHttpReplyMessage<R>> expected =
+        private final ParameterizedTypeReference<SpringHttpReplyMessage<R>> expected =
                 new ParameterizedTypeReference<SpringHttpReplyMessage<R>>() {
                 };
 

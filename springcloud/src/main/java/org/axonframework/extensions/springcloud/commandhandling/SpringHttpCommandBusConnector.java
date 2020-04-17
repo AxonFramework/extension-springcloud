@@ -1,10 +1,11 @@
 /*
- * Copyright (c) 2010-2017. Axon Framework
+ * Copyright (c) 2010-2020. Axon Framework
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,6 +21,7 @@ import org.axonframework.commandhandling.CommandCallback;
 import org.axonframework.commandhandling.CommandMessage;
 import org.axonframework.commandhandling.CommandResultMessage;
 import org.axonframework.commandhandling.distributed.CommandBusConnector;
+import org.axonframework.commandhandling.distributed.CommandDispatchException;
 import org.axonframework.commandhandling.distributed.Member;
 import org.axonframework.common.AxonConfigurationException;
 import org.axonframework.common.DirectExecutor;
@@ -130,21 +132,29 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
     public <C, R> void send(Member destination,
                             CommandMessage<C> commandMessage,
                             CommandCallback<? super C, R> callback) {
-        shutdownLatch.ifShuttingDown("JGroupsConnector is shutting down, no new commands will be sent.");
+        shutdownLatch.ifShuttingDown("SpringHttpCommandBusConnector is shutting down, no new commands will be sent.");
         ShutdownLatch.ActivityHandle activityHandle = shutdownLatch.registerActivity();
         if (destination.local()) {
             CommandCallback<C, R> wrapper = (cm, crm) -> {
-                callback.onResult(cm, crm);
-                activityHandle.end();
+                try {
+                    callback.onResult(cm, crm);
+                } finally {
+                    activityHandle.end();
+                }
             };
             localCommandBus.dispatch(commandMessage, wrapper);
         } else {
             executor.execute(() -> {
-                SpringHttpReplyMessage<R> replyMessage =
-                        this.<C, R>sendRemotely(destination, commandMessage, EXPECT_REPLY).getBody();
-                activityHandle.end();
-                if (replyMessage != null) {
-                    callback.onResult(commandMessage, replyMessage.getCommandResultMessage(serializer));
+                try {
+                    SpringHttpReplyMessage<R> replyMessage =
+                            this.<C, R>sendRemotely(destination, commandMessage, EXPECT_REPLY).getBody();
+                    if (replyMessage != null) {
+                        callback.onResult(commandMessage, replyMessage.getCommandResultMessage(serializer));
+                    }
+                } catch (Exception e) {
+                    callback.onResult(commandMessage, asCommandResultMessage(new CommandDispatchException("An exception occurred while dispatching a command or its result", e)));
+                } finally {
+                    activityHandle.end();
                 }
             });
         }
