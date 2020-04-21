@@ -135,7 +135,7 @@ public class SpringCloudCommandRouter implements CommandRouter {
      */
     public static boolean serviceInstanceMetadataContainsMessageRoutingInformation(ServiceInstance serviceInstance) {
         Map<String, String> serviceInstanceMetadata = serviceInstance.getMetadata();
-        return serviceInstanceMetadata != null && 
+        return serviceInstanceMetadata != null &&
                 serviceInstanceMetadata.containsKey(LOAD_FACTOR) &&
                 serviceInstanceMetadata.containsKey(SERIALIZED_COMMAND_FILTER) &&
                 serviceInstanceMetadata.containsKey(SERIALIZED_COMMAND_FILTER_CLASS_NAME);
@@ -325,11 +325,10 @@ public class SpringCloudCommandRouter implements CommandRouter {
 
     private Member buildLocalMember(ServiceInstance localServiceInstance) {
         String localServiceId = localServiceInstance.getServiceId();
-        URI serviceWithContextRootUri = buildRemoteUriWithContextRoot(localServiceInstance);
         URI emptyEndpoint = null;
         //noinspection ConstantConditions | added null variable for clarity
         return registered
-                ? new SimpleMember<>(buildSimpleMemberName(localServiceId, serviceWithContextRootUri),
+                ? new SimpleMember<>(buildSimpleMemberName(localServiceId, buildRemoteUriWithContextRoot(localServiceInstance)),
                                      localServiceInstance.getUri(),
                                      SimpleMember.LOCAL_MEMBER,
                                      this::suspect)
