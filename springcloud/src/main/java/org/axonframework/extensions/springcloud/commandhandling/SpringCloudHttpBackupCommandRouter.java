@@ -74,6 +74,7 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
     private final RestTemplate restTemplate;
     private final String messageRoutingInformationEndpoint;
     private final MessageRoutingInformation unreachableService;
+    private final boolean enforceHttpDiscovery;
 
     private volatile MessageRoutingInformation messageRoutingInfo;
 
@@ -91,6 +92,7 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
         super(builder);
         this.restTemplate = builder.restTemplate;
         this.messageRoutingInformationEndpoint = builder.messageRoutingInformationEndpoint;
+        this.enforceHttpDiscovery = builder.enforceHttpDiscovery;
         messageRoutingInfo = null;
         unreachableService = new MessageRoutingInformation(0, DenyAll.INSTANCE, serializer);
     }
@@ -131,6 +133,10 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
 
     @Override
     protected Optional<MessageRoutingInformation> getMessageRoutingInformation(ServiceInstance serviceInstance) {
+        if (enforceHttpDiscovery) {
+            return requestMessageRoutingInformation(serviceInstance);
+        }
+
         Optional<MessageRoutingInformation> defaultMessageRoutingInfo =
                 super.getMessageRoutingInformation(serviceInstance);
         return defaultMessageRoutingInfo.isPresent() ?
@@ -197,6 +203,7 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
 
         private RestTemplate restTemplate;
         private String messageRoutingInformationEndpoint = "/message-routing-information";
+        private boolean enforceHttpDiscovery = false;
 
         public Builder() {
             serviceInstanceFilter(ACCEPT_ALL_INSTANCES_FILTER);
@@ -266,6 +273,19 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
             assertMessageRoutingInfoEndpoint(messageRoutingInformationEndpoint,
                                              "The messageRoutingInformationEndpoint may not be null or empty");
             this.messageRoutingInformationEndpoint = messageRoutingInformationEndpoint;
+            return this;
+        }
+
+        /**
+         * Enforces the back up solution provided by this {@link SpringCloudCommandRouter} to be used for retrieving
+         * {@link MessageRoutingInformation}. This should be toggled on if the utilized Spring Cloud Discovery mechanism
+         * has an inconsistent metadata update policy on the {@link ServiceInstance}, which can lead to inconsistent
+         * {@code MessageRoutingInformation} being shared.
+         *
+         * @return the current Builder instance, for fluent interfacing
+         */
+        public Builder enforceHttpDiscovery() {
+            this.enforceHttpDiscovery = true;
             return this;
         }
 

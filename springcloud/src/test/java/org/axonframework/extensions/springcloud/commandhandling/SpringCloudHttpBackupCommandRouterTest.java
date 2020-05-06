@@ -21,13 +21,10 @@ import org.axonframework.commandhandling.distributed.RoutingStrategy;
 import org.axonframework.commandhandling.distributed.commandfilter.AcceptAll;
 import org.axonframework.commandhandling.distributed.commandfilter.DenyAll;
 import org.axonframework.serialization.xml.XStreamSerializer;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.*;
+import org.junit.runner.*;
+import org.mockito.*;
+import org.mockito.junit.*;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.discovery.event.HeartbeatEvent;
@@ -229,6 +226,37 @@ public class SpringCloudHttpBackupCommandRouterTest {
         )).thenReturn(responseEntity);
 
         Optional<MessageRoutingInformation> result = testSubject.getMessageRoutingInformation(nonAxonInstance);
+
+        assertTrue(result.isPresent());
+        assertEquals(expectedMessageRoutingInfo, result.get());
+
+        verify(restTemplate).exchange(uriArgumentCaptor.capture(),
+                                      eq(HttpMethod.GET),
+                                      eq(HttpEntity.EMPTY),
+                                      eq(MessageRoutingInformation.class));
+
+        URI resultUri = uriArgumentCaptor.getValue();
+        assertEquals(messageRoutingInformationEndpoint, resultUri.getPath());
+    }
+
+    @Test
+    public void testGetMessageRoutingInformationWithEnforcedHttpDiscovery() {
+        SpringCloudHttpBackupCommandRouter testSubject =
+                SpringCloudHttpBackupCommandRouter.builder()
+                                                  .discoveryClient(discoveryClient)
+                                                  .localServiceInstance(localServiceInstance)
+                                                  .routingStrategy(routingStrategy)
+                                                  .restTemplate(restTemplate)
+                                                  .messageRoutingInformationEndpoint(messageRoutingInformationEndpoint)
+                                                  .contextRootMetadataPropertyName(contextRootMetadataPropertyName)
+                                                  .enforceHttpDiscovery()
+                                                  .build();
+
+        ServiceInstance remoteInstance = mock(ServiceInstance.class);
+        when(remoteInstance.getServiceId()).thenReturn(SERVICE_INSTANCE_ID);
+        when(remoteInstance.getUri()).thenReturn(testRemoteUri);
+
+        Optional<MessageRoutingInformation> result = testSubject.getMessageRoutingInformation(remoteInstance);
 
         assertTrue(result.isPresent());
         assertEquals(expectedMessageRoutingInfo, result.get());
