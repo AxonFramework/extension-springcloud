@@ -22,6 +22,7 @@ import org.axonframework.commandhandling.distributed.Member;
 import org.axonframework.commandhandling.distributed.RoutingStrategy;
 import org.axonframework.commandhandling.distributed.commandfilter.DenyAll;
 import org.axonframework.common.AxonConfigurationException;
+import org.axonframework.serialization.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.client.ServiceInstance;
@@ -244,6 +245,12 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
         @Override
         public Builder contextRootMetadataPropertyName(String contextRootMetadataPropertyName) {
             super.contextRootMetadataPropertyName(contextRootMetadataPropertyName);
+            return this;
+        }
+
+        @Override
+        public Builder serializer(Serializer serializer) {
+            super.serializer(serializer);
             return this;
         }
 
