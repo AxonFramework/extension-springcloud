@@ -1,10 +1,11 @@
 /*
- * Copyright (c) 2010-2018. Axon Framework
+ * Copyright (c) 2010-2020. Axon Framework
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,6 +26,7 @@ import org.axonframework.commandhandling.distributed.RoutingStrategy;
 import org.axonframework.commandhandling.distributed.SimpleMember;
 import org.axonframework.common.AxonConfigurationException;
 import org.axonframework.serialization.SerializedObject;
+import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.SimpleSerializedObject;
 import org.axonframework.serialization.xml.XStreamSerializer;
 import org.slf4j.Logger;
@@ -47,6 +49,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.axonframework.common.BuilderUtils.assertNonNull;
@@ -76,26 +79,25 @@ public class SpringCloudCommandRouter implements CommandRouter {
     private static final String SERIALIZED_COMMAND_FILTER = "serializedCommandFilter";
     private static final String SERIALIZED_COMMAND_FILTER_CLASS_NAME = "serializedCommandFilterClassName";
 
-    protected final XStreamSerializer serializer = XStreamSerializer.builder().build();
-
     private final DiscoveryClient discoveryClient;
     private final Registration localServiceInstance;
     private final RoutingStrategy routingStrategy;
     private final Predicate<ServiceInstance> serviceInstanceFilter;
     private final ConsistentHashChangeListener consistentHashChangeListener;
+    private final String contextRootMetadataPropertyname;
+    protected final Serializer serializer;
 
     private final AtomicReference<ConsistentHash> atomicConsistentHash = new AtomicReference<>(new ConsistentHash());
     private final Set<ServiceInstance> blackListedServiceInstances = new HashSet<>();
-    private final String contextRootMetadataPropertyname;
 
     private volatile boolean registered = false;
 
     /**
      * Instantiate a {@link SpringCloudCommandRouter} based on the fields contained in the {@link Builder}.
      * <p>
-     * Will assert that the {@link DiscoveryClient}, {@code localServiceInstance} of type {@link Registration},
-     * {@link RoutingStrategy}, {@code serviceInstanceFilter} and {@link ConsistentHashChangeListener} are not
-     * {@code null}, and will throw an {@link AxonConfigurationException} if any of them is {@code null}.
+     * Will assert that the {@link DiscoveryClient}, {@code localServiceInstance} of type {@link Registration}, {@link
+     * RoutingStrategy}, {@code serviceInstanceFilter} and {@link ConsistentHashChangeListener} are not {@code null},
+     * and will throw an {@link AxonConfigurationException} if any of them is {@code null}.
      *
      * @param builder the {@link Builder} used to instantiate a {@link SpringCloudCommandRouter} instance
      */
@@ -107,6 +109,7 @@ public class SpringCloudCommandRouter implements CommandRouter {
         serviceInstanceFilter = builder.serviceInstanceFilter;
         consistentHashChangeListener = builder.consistentHashChangeListener;
         contextRootMetadataPropertyname = builder.contextRootMetadataPropertyname;
+        serializer = builder.serializerSupplier.get();
     }
 
     /**
@@ -425,6 +428,7 @@ public class SpringCloudCommandRouter implements CommandRouter {
                 SpringCloudCommandRouter::serviceInstanceMetadataContainsMessageRoutingInformation;
         private ConsistentHashChangeListener consistentHashChangeListener = ConsistentHashChangeListener.noOp();
         private String contextRootMetadataPropertyname;
+        private Supplier<Serializer> serializerSupplier = XStreamSerializer::defaultSerializer;
 
         /**
          * Sets the {@link DiscoveryClient} used to discovery and notify other nodes. Used to update its own membership
@@ -509,6 +513,20 @@ public class SpringCloudCommandRouter implements CommandRouter {
          */
         public Builder contextRootMetadataPropertyName(String contextRootMetadataPropertyName) {
             this.contextRootMetadataPropertyname = contextRootMetadataPropertyName;
+            return this;
+        }
+
+        /**
+         * Sets the {@link Serializer} used to de-/serialize the {@link CommandMessageFilter}. It is strongly
+         * recommended to use the {@link XStreamSerializer} for this, as the {@code CommandMessageFilter} is not set up
+         * to be serialized through Jackson. Defaults to the {@link XStreamSerializer}.
+         *
+         * @param serializer a {@link Serializer} used to de-/serialize {@link CommandMessageFilter}
+         * @return the current Builder instance, for fluent interfacing
+         */
+        public Builder serializer(Serializer serializer) {
+            assertNonNull(serializer, "Serializer may not be null");
+            this.serializerSupplier = () -> serializer;
             return this;
         }
 
