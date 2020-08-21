@@ -64,7 +64,10 @@ import static org.axonframework.common.BuilderUtils.assertThat;
  *
  * @author Steven van Beelen
  * @since 3.1
+ * @deprecated in favor of using the regular {@link SpringCloudCommandRouter} with the {@link org.axonframework.extensions.springcloud.commandhandling.capabilitydiscoverymode.RestCapabilityDiscoveryMode}.
  */
+@Deprecated
+// TODO: 21-08-20 Deprecate, or remove entirely? We did a breaking change to the Mongo Extensions 4.4 too, granted it being smaller.
 @RestController
 @RequestMapping("${axon.distributed.spring-cloud.fallback-url:/message-routing-information}")
 public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter {
@@ -133,17 +136,17 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
         return messageRoutingInfo;
     }
 
-    @Override
-    protected Optional<MessageRoutingInformation> getMessageRoutingInformation(ServiceInstance serviceInstance) {
-        if (enforceHttpDiscovery) {
-            return requestMessageRoutingInformation(serviceInstance);
-        }
-
-        Optional<MessageRoutingInformation> defaultMessageRoutingInfo =
-                super.getMessageRoutingInformation(serviceInstance);
-        return defaultMessageRoutingInfo.isPresent() ?
-                defaultMessageRoutingInfo : requestMessageRoutingInformation(serviceInstance);
-    }
+//    @Override
+//    protected Optional<MessageRoutingInformation> getMessageRoutingInformation(ServiceInstance serviceInstance) {
+//        if (enforceHttpDiscovery) {
+//            return requestMessageRoutingInformation(serviceInstance);
+//        }
+//
+//        Optional<MessageRoutingInformation> defaultMessageRoutingInfo =
+//                super.getMessageRoutingInformation(serviceInstance);
+//        return defaultMessageRoutingInfo.isPresent() ?
+//                defaultMessageRoutingInfo : requestMessageRoutingInformation(serviceInstance);
+//    }
 
     private Optional<MessageRoutingInformation> requestMessageRoutingInformation(ServiceInstance serviceInstance) {
         Member member = buildMember(serviceInstance);
