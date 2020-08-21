@@ -84,7 +84,7 @@ public class SpringCloudCommandRouter implements CommandRouter {
     private final RoutingStrategy routingStrategy;
     private final Predicate<ServiceInstance> serviceInstanceFilter;
     private final ConsistentHashChangeListener consistentHashChangeListener;
-    private final String contextRootMetadataPropertyname;
+    private final String contextRootMetadataPropertyName;
     protected final Serializer serializer;
 
     private final AtomicReference<ConsistentHash> atomicConsistentHash = new AtomicReference<>(new ConsistentHash());
@@ -108,7 +108,7 @@ public class SpringCloudCommandRouter implements CommandRouter {
         routingStrategy = builder.routingStrategy;
         serviceInstanceFilter = builder.serviceInstanceFilter;
         consistentHashChangeListener = builder.consistentHashChangeListener;
-        contextRootMetadataPropertyname = builder.contextRootMetadataPropertyname;
+        contextRootMetadataPropertyName = builder.contextRootMetadataPropertyName;
         serializer = builder.serializerSupplier.get();
     }
 
@@ -356,24 +356,24 @@ public class SpringCloudCommandRouter implements CommandRouter {
     }
 
     private URI buildRemoteUriWithContextRoot(ServiceInstance serviceInstance) {
-        if (contextRootMetadataPropertyname == null) {
+        if (contextRootMetadataPropertyName == null) {
             return serviceInstance.getUri();
         }
 
         if (serviceInstance.getMetadata() == null) {
             logger.warn("A contextRootMetadataPropertyName [{}] has been provided, but the metadata is null. " +
-                                "Defaulting to '/' as the context root.", contextRootMetadataPropertyname);
+                                "Defaulting to '/' as the context root.", contextRootMetadataPropertyName);
             return serviceInstance.getUri();
         }
 
-        if (!serviceInstance.getMetadata().containsKey(contextRootMetadataPropertyname)) {
+        if (!serviceInstance.getMetadata().containsKey(contextRootMetadataPropertyName)) {
             logger.info("The service instance metadata does not contain a property with name '{}'. " +
-                                "Defaulting to '/' as the context root.", contextRootMetadataPropertyname);
+                                "Defaulting to '/' as the context root.", contextRootMetadataPropertyName);
             return serviceInstance.getUri();
         }
 
         return UriComponentsBuilder.fromUri(serviceInstance.getUri())
-                                   .path(serviceInstance.getMetadata().get(contextRootMetadataPropertyname))
+                                   .path(serviceInstance.getMetadata().get(contextRootMetadataPropertyName))
                                    .build()
                                    .toUri();
     }
@@ -427,7 +427,7 @@ public class SpringCloudCommandRouter implements CommandRouter {
         private Predicate<ServiceInstance> serviceInstanceFilter =
                 SpringCloudCommandRouter::serviceInstanceMetadataContainsMessageRoutingInformation;
         private ConsistentHashChangeListener consistentHashChangeListener = ConsistentHashChangeListener.noOp();
-        private String contextRootMetadataPropertyname;
+        private String contextRootMetadataPropertyName;
         private Supplier<Serializer> serializerSupplier = XStreamSerializer::defaultSerializer;
 
         /**
@@ -512,7 +512,7 @@ public class SpringCloudCommandRouter implements CommandRouter {
          * @return the current Builder instance, for fluent interfacing
          */
         public Builder contextRootMetadataPropertyName(String contextRootMetadataPropertyName) {
-            this.contextRootMetadataPropertyname = contextRootMetadataPropertyName;
+            this.contextRootMetadataPropertyName = contextRootMetadataPropertyName;
             return this;
         }
 
