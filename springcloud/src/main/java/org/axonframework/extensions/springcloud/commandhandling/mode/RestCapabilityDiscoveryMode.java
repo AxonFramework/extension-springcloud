@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.axonframework.extensions.springcloud.commandhandling.capabilitydiscoverymode;
+package org.axonframework.extensions.springcloud.commandhandling.mode;
 
 import org.axonframework.commandhandling.distributed.CommandMessageFilter;
 import org.axonframework.commandhandling.distributed.Member;
@@ -109,12 +109,9 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
         if (isLocalServiceInstance(serviceInstance)) {
             return localCapabilities;
         }
-        URI destinationUri = UriComponentsBuilder.newInstance()
-                                                 .host(serviceInstance.getHost())
-                                                 .port(serviceInstance.getPort())
+        URI destinationUri = UriComponentsBuilder.fromUri(serviceInstance.getUri())
                                                  .path(messageRoutingInformationEndpoint)
-                                                 .build()
-                                                 .toUri();
+                                                 .build().toUri();
 
         SerializedMemberCapabilities serializedMemberCapabilities = restTemplate.exchange(
                 destinationUri, HttpMethod.GET, HttpEntity.EMPTY, SerializedMemberCapabilities.class
@@ -143,7 +140,7 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
      */
     @GetMapping
     public MemberCapabilities getLocalMemberCapabilities() {
-        return new SerializedMemberCapabilities(localCapabilities, serializer);
+        return localCapabilities;
     }
 
     /**

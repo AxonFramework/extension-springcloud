@@ -25,7 +25,7 @@ import org.axonframework.commandhandling.distributed.Member;
 import org.axonframework.commandhandling.distributed.RoutingStrategy;
 import org.axonframework.commandhandling.distributed.SimpleMember;
 import org.axonframework.common.AxonConfigurationException;
-import org.axonframework.extensions.springcloud.commandhandling.capabilitydiscoverymode.CapabilityDiscoveryMode;
+import org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.xml.XStreamSerializer;
 import org.slf4j.Logger;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.axonframework.extensions.springcloud.commandhandling.capabilitydiscoverymode;
+package org.axonframework.extensions.springcloud.commandhandling.mode;
 
 import org.axonframework.commandhandling.distributed.CommandMessageFilter;
 import org.axonframework.commandhandling.distributed.commandfilter.AcceptAll;
@@ -71,7 +71,7 @@ public class SimpleCapabilityDiscoveryMode extends RestCapabilityDiscoveryMode {
     public void updateLocalCapabilities(ServiceInstance localInstance,
                                         int loadFactor,
                                         CommandMessageFilter commandFilter) {
-        localCapabilities = new DefaultMemberCapabilities(loadFactor, AcceptAll.INSTANCE);
+        super.updateLocalCapabilities(localInstance, loadFactor, AcceptAll.INSTANCE);
     }
 
     /**

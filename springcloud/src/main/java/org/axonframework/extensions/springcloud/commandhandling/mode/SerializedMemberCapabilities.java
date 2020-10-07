@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.axonframework.extensions.springcloud.commandhandling.capabilitydiscoverymode;
+package org.axonframework.extensions.springcloud.commandhandling.mode;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -39,7 +39,7 @@ public class SerializedMemberCapabilities implements MemberCapabilities {
     private final int loadFactor;
     private final String serializedCommandFilter;
     private final String serializedCommandFilterType;
-    private Serializer serializer;
+    private transient Serializer serializer;
 
     /**
      * Construct a {@link SerializedMemberCapabilities} based on the given {@code delegate}, serializing the {@link
