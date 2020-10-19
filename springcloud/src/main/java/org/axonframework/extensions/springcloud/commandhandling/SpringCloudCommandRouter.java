@@ -38,6 +38,7 @@ import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.event.EventListener;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.util.Collection;
 import java.util.List;
@@ -69,7 +70,7 @@ import static org.axonframework.common.BuilderUtils.assertNonNull;
  */
 public class SpringCloudCommandRouter implements CommandRouter {
 
-    private static final Logger logger = LoggerFactory.getLogger(SpringCloudCommandRouter.class);
+    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private static final String LOAD_FACTOR = "loadFactor";
     private static final String SERIALIZED_COMMAND_FILTER = "serializedCommandFilter";
@@ -78,22 +79,36 @@ public class SpringCloudCommandRouter implements CommandRouter {
     private final DiscoveryClient discoveryClient;
     private final Registration localServiceInstance;
     private final RoutingStrategy routingStrategy;
+    private final CapabilityDiscoveryMode capabilityDiscoveryMode;
+    protected final Serializer serializer;
     private final Predicate<ServiceInstance> serviceInstanceFilter;
     private final ConsistentHashChangeListener consistentHashChangeListener;
     private final String contextRootMetadataPropertyName;
-    protected final Serializer serializer;
-    private final CapabilityDiscoveryMode capabilityDiscoveryMode;
 
     private final AtomicReference<ConsistentHash> atomicConsistentHash = new AtomicReference<>(new ConsistentHash());
 
     private volatile boolean registered = false;
 
     /**
+     * Instantiate a Builder to be able to create a {@link SpringCloudCommandRouter}.
+     * <p>
+     * The {@link Serializer} is defaulted to a {@link XStreamSerializer}, the {@code serviceInstanceFilter} to accept
+     * all instances, and the {@link ConsistentHashChangeListener} to a no-op solution. The {@link DiscoveryClient},
+     * {@code localServiceInstance} of type {@link Registration}, the {@link RoutingStrategy} and the {@link
+     * CapabilityDiscoveryMode} are <b>hard requirements</b> and as such should be provided.
+     *
+     * @return a Builder to be able to create a {@link SpringCloudCommandRouter}
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
      * Instantiate a {@link SpringCloudCommandRouter} based on the fields contained in the {@link Builder}.
      * <p>
      * Will assert that the {@link DiscoveryClient}, {@code localServiceInstance} of type {@link Registration}, {@link
-     * RoutingStrategy}, {@code serviceInstanceFilter} and {@link ConsistentHashChangeListener} are not {@code null},
-     * and will throw an {@link AxonConfigurationException} if any of them is {@code null}.
+     * RoutingStrategy} and {@link CapabilityDiscoveryMode} are not {@code null}, and will throw an {@link
+     * AxonConfigurationException} if any of them is {@code null}.
      *
      * @param builder the {@link Builder} used to instantiate a {@link SpringCloudCommandRouter} instance
      */
@@ -102,25 +117,11 @@ public class SpringCloudCommandRouter implements CommandRouter {
         discoveryClient = builder.discoveryClient;
         localServiceInstance = builder.localServiceInstance;
         routingStrategy = builder.routingStrategy;
+        capabilityDiscoveryMode = builder.capabilityDiscoveryMode;
+        serializer = builder.serializerSupplier.get();
         serviceInstanceFilter = builder.serviceInstanceFilter;
         consistentHashChangeListener = builder.consistentHashChangeListener;
         contextRootMetadataPropertyName = builder.contextRootMetadataPropertyName;
-        serializer = builder.serializerSupplier.get();
-        capabilityDiscoveryMode = builder.capabilityDiscoveryMode;
-    }
-
-    /**
-     * Instantiate a Builder to be able to create a {@link SpringCloudCommandRouter}.
-     * <p>
-     * The {@code serviceInstanceFilter} is defaulted to the {@link SpringCloudCommandRouter#serviceInstanceMetadataContainsMessageRoutingInformation}
-     * function, and the {@link ConsistentHashChangeListener} to a no-op solution. The {@link DiscoveryClient}, {@code
-     * localServiceInstance} of type {@link Registration} and {@link RoutingStrategy} are <b>hard requirements</b> and
-     * as such should be provided.
-     *
-     * @return a Builder to be able to create a {@link SpringCloudCommandRouter}
-     */
-    public static Builder builder() {
-        return new Builder();
     }
 
     /**
@@ -131,7 +132,10 @@ public class SpringCloudCommandRouter implements CommandRouter {
      *                        from
      * @return true if the given {@code serviceInstance} contains all expected message routing info keys; false if one
      * of the expected message routing info keys is missing.
+     * @deprecated no current {@link CapabilityDiscoveryMode} basis itself on {@link ServiceInstance#getMetadata()} and
+     * as such this filter will be removed
      */
+    @Deprecated
     public static boolean serviceInstanceMetadataContainsMessageRoutingInformation(ServiceInstance serviceInstance) {
         Map<String, String> serviceInstanceMetadata = serviceInstance.getMetadata();
         return serviceInstanceMetadata != null &&
@@ -148,7 +152,9 @@ public class SpringCloudCommandRouter implements CommandRouter {
     @Override
     public void updateMembership(int loadFactor, CommandMessageFilter commandFilter) {
         capabilityDiscoveryMode.updateLocalCapabilities(localServiceInstance, loadFactor, commandFilter);
-        atomicConsistentHash.get().with(buildMember(localServiceInstance), loadFactor, commandFilter);
+        consistentHashChangeListener.onConsistentHashChanged(atomicConsistentHash.updateAndGet(
+                consistentHash -> consistentHash.with(buildMember(localServiceInstance), loadFactor, commandFilter)
+        ));
     }
 
     /**
@@ -165,7 +171,7 @@ public class SpringCloudCommandRouter implements CommandRouter {
      * @see SpringCloudCommandRouter#buildMember(ServiceInstance)
      */
     @EventListener
-    @SuppressWarnings("UnusedParameters")
+    @SuppressWarnings({"UnusedParameters", "rawtypes"})
     public void resetLocalMembership(InstanceRegisteredEvent event) {
         registered = true;
 
@@ -176,21 +182,21 @@ public class SpringCloudCommandRouter implements CommandRouter {
 
         updateMemberships();
 
-        startUpPhaseLocalMember.ifPresent(m -> {
+        startUpPhaseLocalMember.ifPresent(localMember -> {
             if (logger.isDebugEnabled()) {
-                logger.debug("Resetting local membership for [{}].", m);
+                logger.debug("Resetting local membership for [{}].", localMember);
             }
-            atomicConsistentHash.updateAndGet(consistentHash -> consistentHash.without(m));
+            atomicConsistentHash.updateAndGet(consistentHash -> consistentHash.without(localMember));
         });
     }
 
     /**
-     * Update the memberships of all nodes known by the {@link org.springframework.cloud.client.discovery.DiscoveryClient}
-     * to be able to have an as up-to-date awareness of which actions which members can handle. This function is
-     * automatically triggered by an (unused) {@link org.springframework.cloud.client.discovery.event.HeartbeatEvent}.
+     * Update the memberships of all nodes known by the {@link DiscoveryClient} to be able to have an as up-to-date
+     * awareness of which actions which members can handle. This function is automatically triggered by an (unused)
+     * {@link HeartbeatEvent}. The interval of this {@code HeartbeatEvent} thus specifies the speed within which cluster
+     * topologies, a.k.a. each nodes command handling capabilities, are propagated.
      *
-     * @param event an unused {@link org.springframework.cloud.client.discovery.event.HeartbeatEvent}, serves as a
-     *              trigger for this function
+     * @param event an unused {@link HeartbeatEvent}, serves as a trigger for this function
      */
     @EventListener
     @SuppressWarnings("UnusedParameters")
@@ -210,10 +216,12 @@ public class SpringCloudCommandRouter implements CommandRouter {
         for (ServiceInstance serviceInstance : instances) {
             logger.debug("Updating membership for service instance: [{}]", serviceInstance);
             capabilityDiscoveryMode.capabilities(serviceInstance)
-                                   .ifPresent(memberCapabilities -> updatedConsistentHash.get().with(
-                                           buildMember(serviceInstance),
-                                           memberCapabilities.getLoadFactor(),
-                                           memberCapabilities.getCommandFilter()
+                                   .ifPresent(memberCapabilities -> updatedConsistentHash.updateAndGet(
+                                           consistentHash -> consistentHash.with(
+                                                   buildMember(serviceInstance),
+                                                   memberCapabilities.getLoadFactor(),
+                                                   memberCapabilities.getCommandFilter()
+                                           )
                                    ));
         }
 
@@ -224,19 +232,22 @@ public class SpringCloudCommandRouter implements CommandRouter {
 
     /**
      * Instantiate a {@link Member} of type {@link java.net.URI} based on the provided {@code serviceInstance}. This
-     * Member is later used to send, for example, Command messages to.
+     * {@code Member} is later used to send, for example, {@link CommandMessage}s to.
      * <p>
-     * A deviation is made between a local and a remote member, since if local is selected to handle the command, the
-     * local CommandBus may be leveraged. The check if a {@link org.springframework.cloud.client.ServiceInstance} is
-     * local is based on two potential situations: 1) the given {@code serviceInstance} is identical to the {@code
-     * localServiceInstance} thus making it local or 2) the URI of the given {@code serviceInstance} is identical to the
-     * URI of the {@code localServiceInstance}. We take this route because we've identified that several Spring Cloud
-     * implementation do not contain any URI information during the start up phase and as a side effect will throw
-     * exception if the URI is requested from it. We thus return a simplified Member for the {@code
-     * localServiceInstance} to not trigger this exception.
+     * A deviation is made between a local and a remote member, since if a local node is selected to handle the command,
+     * the local command bus may be leveraged. The check if a {@link ServiceInstance} is local is based on two potential
+     * situations:
+     * <ol>
+     *     <li>The given {@code serviceInstance} is identical to the {@code localServiceInstance} thus making it local.</li>
+     *     <li>The URI of the given {@code serviceInstance} is identical to the URI of the {@code localServiceInstance}.</li>
+     * </ol>
+     * <p>
+     * We take this route because we've identified that several Spring Cloud implementations do not contain any URI
+     * information during the start up phase and as a side effect will throw exception if the URI is requested from it.
+     * We thus return a simplified {@link Member} for the {@code localServiceInstance} to not trigger this exception.
      *
-     * @param serviceInstance A {@link org.springframework.cloud.client.ServiceInstance} to build a {@link Member} for
-     * @return A {@link Member} based on the contents of the provided {@code serviceInstance}
+     * @param serviceInstance a {@link ServiceInstance} to build a {@link Member} for
+     * @return a {@link Member} based on the contents of the provided {@code serviceInstance}
      */
     protected Member buildMember(ServiceInstance serviceInstance) {
         return isLocalServiceInstance(serviceInstance)
@@ -254,8 +265,7 @@ public class SpringCloudCommandRouter implements CommandRouter {
         URI emptyEndpoint = null;
         //noinspection ConstantConditions | added null variable for clarity
         return registered
-                ? new SimpleMember<>(buildSimpleMemberName(localServiceId,
-                                                           buildRemoteUriWithContextRoot(localServiceInstance)),
+                ? new SimpleMember<>(buildName(localServiceId, buildRemoteUriWithContextRoot(localServiceInstance)),
                                      localServiceInstance.getUri(),
                                      SimpleMember.LOCAL_MEMBER,
                                      this::suspect)
@@ -268,14 +278,13 @@ public class SpringCloudCommandRouter implements CommandRouter {
     private Member buildRemoteMember(ServiceInstance remoteServiceInstance) {
         URI serviceWithContextRootUri = buildRemoteUriWithContextRoot(remoteServiceInstance);
 
-        return new SimpleMember<>(buildSimpleMemberName(remoteServiceInstance.getServiceId(),
-                                                        serviceWithContextRootUri),
+        return new SimpleMember<>(buildName(remoteServiceInstance.getServiceId(), serviceWithContextRootUri),
                                   serviceWithContextRootUri,
                                   SimpleMember.REMOTE_MEMBER,
                                   this::suspect);
     }
 
-    private String buildSimpleMemberName(String serviceId, URI serviceUri) {
+    private String buildName(String serviceId, URI serviceUri) {
         return serviceId.toUpperCase() + "[" + serviceUri + "]";
     }
 
@@ -312,22 +321,21 @@ public class SpringCloudCommandRouter implements CommandRouter {
     /**
      * Builder class to instantiate a {@link SpringCloudCommandRouter}.
      * <p>
-     * The {@code serviceInstanceFilter} is defaulted to the {@link SpringCloudCommandRouter#serviceInstanceMetadataContainsMessageRoutingInformation}
-     * function, and the {@link ConsistentHashChangeListener} to a no-op solution. The {@link DiscoveryClient}, {@code
-     * localServiceInstance} of type {@link Registration} and {@link RoutingStrategy} are <b>hard requirements</b> and
-     * as such should be provided.
+     * The {@link Serializer} is defaulted to a {@link XStreamSerializer}, the {@code serviceInstanceFilter} to accept
+     * all instances, and the {@link ConsistentHashChangeListener} to a no-op solution. The {@link DiscoveryClient},
+     * {@code localServiceInstance} of type {@link Registration}, the {@link RoutingStrategy} and the {@link
+     * CapabilityDiscoveryMode} are <b>hard requirements</b> and as such should be provided.
      */
     public static class Builder {
 
         private DiscoveryClient discoveryClient;
         private Registration localServiceInstance;
         private RoutingStrategy routingStrategy;
-        private Predicate<ServiceInstance> serviceInstanceFilter =
-                SpringCloudCommandRouter::serviceInstanceMetadataContainsMessageRoutingInformation;
+        private CapabilityDiscoveryMode capabilityDiscoveryMode;
+        private Supplier<Serializer> serializerSupplier = XStreamSerializer::defaultSerializer;
+        private Predicate<ServiceInstance> serviceInstanceFilter = serviceInstance -> true;
         private ConsistentHashChangeListener consistentHashChangeListener = ConsistentHashChangeListener.noOp();
         private String contextRootMetadataPropertyName;
-        private Supplier<Serializer> serializerSupplier = XStreamSerializer::defaultSerializer;
-        private CapabilityDiscoveryMode capabilityDiscoveryMode;
 
         /**
          * Sets the {@link DiscoveryClient} used to discovery and notify other nodes. Used to update its own membership
@@ -371,9 +379,37 @@ public class SpringCloudCommandRouter implements CommandRouter {
         }
 
         /**
-         * Sets a {@link Predicate} of generic type {@link ServiceInstance}, used to filter out ServiceInstances from
-         * the membership update loop. Defaults to the {@link SpringCloudCommandRouter#serviceInstanceMetadataContainsMessageRoutingInformation(ServiceInstance)},
-         * which filters any instances missing message routing information key-value pairs in their metadata.
+         * Defines the {@link CapabilityDiscoveryMode} used by this {@link CommandRouter} implementation. The {@code
+         * CapabilityDiscoveryMode} is in charge of discovering the capabilities of other nodes and sharing this nodes
+         * capabilities.
+         *
+         * @param capabilityDiscoveryMode a {@link CapabilityDiscoveryMode} in charge of discovering the capabilities of
+         *                                other nodes and sharing this nodes capabilities
+         * @return the current Builder instance, for fluent interfacing
+         */
+        public Builder capabilityDiscoveryMode(CapabilityDiscoveryMode capabilityDiscoveryMode) {
+            assertNonNull(capabilityDiscoveryMode, "CapabilityDiscoveryMode may not be null");
+            this.capabilityDiscoveryMode = capabilityDiscoveryMode;
+            return this;
+        }
+
+        /**
+         * Sets the {@link Serializer} used to de-/serialize the {@link CommandMessageFilter}. It is strongly
+         * recommended to use the {@link XStreamSerializer} for this, as the {@code CommandMessageFilter} is not set up
+         * to be serialized through Jackson. Defaults to the {@link XStreamSerializer}.
+         *
+         * @param serializer a {@link Serializer} used to de-/serialize {@link CommandMessageFilter}
+         * @return the current Builder instance, for fluent interfacing
+         */
+        public Builder serializer(Serializer serializer) {
+            assertNonNull(serializer, "Serializer may not be null");
+            this.serializerSupplier = () -> serializer;
+            return this;
+        }
+
+        /**
+         * Sets a {@link Predicate} of generic type {@link ServiceInstance}, used to filter out {@code ServiceInstance}s
+         * from the membership update loop.
          *
          * @param serviceInstanceFilter the {@link Predicate} of generic type {@link ServiceInstance}, used to filter
          *                              out ServiceInstances from the membership update loop
@@ -415,30 +451,6 @@ public class SpringCloudCommandRouter implements CommandRouter {
         }
 
         /**
-         * Sets the {@link Serializer} used to de-/serialize the {@link CommandMessageFilter}. It is strongly
-         * recommended to use the {@link XStreamSerializer} for this, as the {@code CommandMessageFilter} is not set up
-         * to be serialized through Jackson. Defaults to the {@link XStreamSerializer}.
-         *
-         * @param serializer a {@link Serializer} used to de-/serialize {@link CommandMessageFilter}
-         * @return the current Builder instance, for fluent interfacing
-         */
-        public Builder serializer(Serializer serializer) {
-            assertNonNull(serializer, "Serializer may not be null");
-            this.serializerSupplier = () -> serializer;
-            return this;
-        }
-
-        /**
-         * @param capabilityDiscoveryMode
-         * @return the current Builder instance, for fluent interfacing
-         */
-        public Builder capabilityDiscoveryMode(CapabilityDiscoveryMode capabilityDiscoveryMode) {
-            assertNonNull(capabilityDiscoveryMode, "CapabilityDiscoveryMode may not be null");
-            this.capabilityDiscoveryMode = capabilityDiscoveryMode;
-            return this;
-        }
-
-        /**
          * Initializes a {@link SpringCloudCommandRouter} as specified through this Builder.
          *
          * @return a {@link SpringCloudCommandRouter} as specified through this Builder
@@ -457,12 +469,9 @@ public class SpringCloudCommandRouter implements CommandRouter {
             assertNonNull(discoveryClient, "The DiscoveryClient is a hard requirement and should be provided");
             assertNonNull(localServiceInstance, "The Registration is a hard requirement and should be provided");
             assertNonNull(routingStrategy, "The RoutingStrategy is a hard requirement and should be provided");
-            assertNonNull(serviceInstanceFilter,
-                          "The ServiceInstanceFilter is a hard requirement and should be provided");
-            assertNonNull(consistentHashChangeListener,
-                          "The ConsistentHashChangeListener is a hard requirement and should be provided");
-            assertNonNull(capabilityDiscoveryMode,
-                          "The CapabilityDiscoveryMode is a hard requirement and should be provided");
+            assertNonNull(
+                    capabilityDiscoveryMode, "The CapabilityDiscoveryMode is a hard requirement and should be provided"
+            );
         }
     }
 }
