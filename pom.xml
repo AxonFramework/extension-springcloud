@@ -53,7 +53,7 @@
         <axon.version>4.4.3</axon.version>
         <spring-cloud-release.version>Hoxton.SR8</spring-cloud-release.version>
 
-        <spring.version>5.3.0</spring.version>
+        <spring.version>5.3.1</spring.version>
         <spring.boot.version>2.3.5.RELEASE</spring.boot.version>
 
         <slf4j.version>1.7.30</slf4j.version>
