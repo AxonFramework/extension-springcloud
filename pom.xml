@@ -51,7 +51,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <axon.version>4.4.3</axon.version>
-        <spring-cloud-release.version>Hoxton.SR8</spring-cloud-release.version>
+        <spring-cloud-release.version>Hoxton.SR9</spring-cloud-release.version>
 
         <spring.version>5.3.1</spring.version>
         <spring.boot.version>2.3.5.RELEASE</spring.boot.version>
