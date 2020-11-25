@@ -59,7 +59,7 @@
         <slf4j.version>1.7.30</slf4j.version>
         <log4j.version>2.14.0</log4j.version>
 
-        <mockito.version>3.6.0</mockito.version>
+        <mockito.version>3.6.28</mockito.version>
         <jackson.version>2.11.3</jackson.version>
         <commons-io.version>2.8.0</commons-io.version>
         <javax.jaxb-api.version>2.3.1</javax.jaxb-api.version>
