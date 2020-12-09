@@ -18,6 +18,7 @@ package org.axonframework.extensions.springcloud.commandhandling.mode;
 
 import org.axonframework.commandhandling.distributed.CommandMessageFilter;
 import org.axonframework.commandhandling.distributed.Member;
+import org.axonframework.commandhandling.distributed.RoutingStrategy;
 import org.axonframework.common.AxonConfigurationException;
 import org.axonframework.extensions.springcloud.commandhandling.MessageRoutingInformation;
 import org.axonframework.serialization.Serializer;
@@ -69,6 +70,7 @@ public abstract class AbstractCapabilityDiscoveryMode<B extends CapabilityDiscov
      * <p>
      * The {@link Serializer} is defaulted to a {@link org.axonframework.serialization.xml.XStreamSerializer} instance
      * and ignore listing is enabled.
+     * @param <B> generic defining the type of {@link CapabilityDiscoveryMode} this builder will create
      */
     protected static abstract class Builder<B extends CapabilityDiscoveryMode> {
 
