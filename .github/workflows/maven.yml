@@ -16,9 +16,9 @@ jobs:
       matrix:
         include:
           - java-version: 8
-            sonar-enabled: 0
+            sonar-enabled: false
           - java-version: 11
-            sonar-enabled: 1
+            sonar-enabled: true
 
     steps:
       - name: Checkout code
@@ -33,13 +33,12 @@ jobs:
         uses: actions/cache@v2.1.3
         with:
           path: ~/.m2/repository
-
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven
 
       - name: Maven operation with Sonar
-        if: matrix.sonar-enabled == 1
+        if: matrix.sonar-enabled
         run: |
           mvn -B -U -Pcoverage \
           clean verify \
@@ -52,7 +51,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Maven operation without Sonar
-        if: matrix.sonar-enabled == 0
+        if: matrix.sonar-enabled != true
         run: |
           mvn -B -U clean verify
         env:
