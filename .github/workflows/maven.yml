@@ -41,12 +41,12 @@ jobs:
       - name: Maven operation with Sonar
         if: matrix.sonar-enabled == 1
         run: |
-          mvn -B -U -Pcoverage
-          clean verify
-          sonar:sonar
-          -Dsonar.projectKey=AxonFramework_extension-springcloud
-          -Dsonar.organization=axonframework
-          -Dsonar.host.url=https://sonarcloud.io
+          mvn -B -U -Pcoverage \
+          clean verify \
+          sonar:sonar \
+          -Dsonar.projectKey=AxonFramework_extension-springcloud \
+          -Dsonar.organization=axonframework \
+          -Dsonar.host.url=https://sonarcloud.io \
           -Dsonar.login=${{ secrets.SONAR_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
