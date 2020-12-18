@@ -12,9 +12,9 @@ jobs:
       matrix:
         include:
           - java-version: 8
-            mvn-parameters: clean verify
+            mvn-parameters: "clean verify"
           - java-version: 11
-            mvn-parameters: -Pcoverage clean verify sonar:sonar -Dsonar.projectKey=AxonFramework_extension-springcloud -Dsonar.organization=axonframework -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            mvn-parameters: "-Pcoverage clean verify sonar:sonar -Dsonar.projectKey=AxonFramework_extension-springcloud -Dsonar.organization=axonframework -Dsonar.login=${{ secrets.SONAR_TOKEN }}"
 
     steps:
       - name: Checkout code
