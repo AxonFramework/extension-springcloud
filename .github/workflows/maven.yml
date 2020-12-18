@@ -1,10 +1,14 @@
 name: Test and Build - Spring Cloud Extension
 
-on: [ push, pull_request ]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
 
 jobs:
   build:
-    name: Test and Build on JDK ${{ matrix.java }}
+    name: Test and Build on JDK ${{ matrix.java-version }}
 
     runs-on: ubuntu-latest
 
@@ -67,3 +71,4 @@ jobs:
           channel_id: CAGSEC92A
           status: FAILED
           color: danger
+
