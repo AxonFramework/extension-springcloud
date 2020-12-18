@@ -12,9 +12,9 @@ jobs:
       matrix:
         include:
           - java-version: 8
-            sonar-enabled: false
+            sonar-enabled: 0
           - java-version: 11
-            sonar-enabled: true
+            sonar-enabled: 1
 
     steps:
       - name: Checkout code
@@ -35,14 +35,14 @@ jobs:
             ${{ runner.os }}-maven
 
       - name: Maven operation with Sonar
-        if: ${{ matrix.sonar-enabled }}
+        if: ${{ matrix.sonar-enabled }} == 1
         run: |
           mvn -B -U -Pcoverage clean verify sonar:sonar -Dsonar.projectKey=AxonFramework_extension-springcloud -Dsonar.organization=axonframework -Dsonar.host.url=https://sonarcloud.io -Dsonar.login=${{ secrets.SONAR_TOKEN }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Maven operation without Sonar
-        if: !${{ matrix.sonar-enabled }}
+        if: ${{ matrix.sonar-enabled }} == 0
         run: |
           mvn -B -U clean verify
         env:
