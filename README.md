@@ -1,4 +1,7 @@
-# Axon Framework - Spring Cloud Extension [![Build Status](https://travis-ci.org/AxonFramework/extension-springcloud.svg?branch=master)](https://travis-ci.org/AxonFramework/extension-springcloud)
+# Axon Framework - Spring Cloud Extension
+![Build Status](https://github.com/AxonFramework/extension-springcloud/workflows/Spring%20Cloud%20Extension/badge.svg?branch=master)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=AxonFramework_extension-springcloud&metric=alert_status)](https://sonarcloud.io/dashboard?id=AxonFramework_extension-springcloud)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/AxonFramework/extension-springcloud)
 
 Axon Framework is a framework for building evolutionary, event-driven microservice systems,
  based on the principles of Domain Driven Design, Command-Query Responsibility Segregation (CQRS) and Event Sourcing.
