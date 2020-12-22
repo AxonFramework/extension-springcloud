@@ -100,7 +100,6 @@ public class SerializedMemberCapabilities implements MemberCapabilities {
      *
      * @param serializer the {@link Serializer} used to deserialize the serialized {@link CommandMessageFilter}
      */
-    // TODO: 21-08-20 I don't like this setter...
     public void setSerializer(Serializer serializer) {
         this.serializer = serializer;
     }

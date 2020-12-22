@@ -27,7 +27,6 @@ import java.io.Serializable;
  * @author Steven van Beelen
  * @since 4.4
  */
-// TODO: 21-08-20 - Should this object also contain the ServiceInstance it defines the capabilities for?
 public interface MemberCapabilities extends Serializable {
 
     /**

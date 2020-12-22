@@ -117,7 +117,6 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
         ).getBody();
         //noinspection ConstantConditions
         serializedMemberCapabilities.setSerializer(serializer);
-        // TODO: 21-08-20 I don't like this setter...
         return serializedMemberCapabilities;
     }
 
