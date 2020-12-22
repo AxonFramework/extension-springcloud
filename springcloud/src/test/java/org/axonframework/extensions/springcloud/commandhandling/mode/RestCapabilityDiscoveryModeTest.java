@@ -46,7 +46,7 @@ class RestCapabilityDiscoveryModeTest {
                                                  .serializer(serializer)
                                                  .restTemplate(restTemplate)
                                                  .disableIgnoreListing()
-                                                 .messageRoutingInformationEndpoint(CUSTOM_ENDPOINT)
+                                                 .messageCapabilitiesEndpoint(CUSTOM_ENDPOINT)
                                                  .build();
     }
 

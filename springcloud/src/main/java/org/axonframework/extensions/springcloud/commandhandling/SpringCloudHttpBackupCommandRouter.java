@@ -215,7 +215,7 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
             // Enforce usage of the RestCapabilityDiscoveryMode by setting it regardless of the provided CapabilityDiscoveryMode
             capabilityDiscoveryMode(
                     RestCapabilityDiscoveryMode.builder()
-                                               .messageRoutingInformationEndpoint(messageRoutingInformationEndpoint)
+                                               .messageCapabilitiesEndpoint(messageRoutingInformationEndpoint)
                                                .restTemplate(restTemplate)
                                                .serializer(serializerSupplier.get())
                                                .build()

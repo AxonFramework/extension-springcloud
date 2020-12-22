@@ -64,8 +64,8 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
      * Instantiate a {@link Builder} to be able to create a {@link RestCapabilityDiscoveryMode}.
      * <p>
      * The {@link Serializer} is defaulted to a {@link org.axonframework.serialization.xml.XStreamSerializer} instance,
-     * the {@code messageRoutingInformationEndpoint} to {@code "/message-routing-information"}, and ignore listing is
-     * enabled. The {@link RestTemplate} is a <b>hard requirement</b> and as such should be provided.
+     * the {@code messageCapabilitiesEndpoint} to {@code "/message-routing-information"}, and ignore listing is enabled.
+     * The {@link RestTemplate} is a <b>hard requirement</b> and as such should be provided.
      *
      * @return a {@link Builder} to be able to create a {@link RestCapabilityDiscoveryMode}
      */
@@ -84,7 +84,7 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
     protected RestCapabilityDiscoveryMode(Builder builder) {
         super(builder);
         this.restTemplate = builder.restTemplate;
-        this.messageRoutingInformationEndpoint = builder.messageRoutingInformationEndpoint;
+        this.messageRoutingInformationEndpoint = builder.messageCapabilitiesEndpoint;
     }
 
     @Override
@@ -145,13 +145,13 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
      * Builder class to instantiate a {@link RestCapabilityDiscoveryMode}.
      * <p>
      * The {@link Serializer} is defaulted to a {@link org.axonframework.serialization.xml.XStreamSerializer} instance,
-     * the {@code messageRoutingInformationEndpoint} to {@code "/message-routing-information"}, and ignore listing is
-     * enabled. The {@link RestTemplate} is a <b>hard requirement</b> and as such should be provided.
+     * the {@code messageCapabilitiesEndpoint} to {@code "/message-routing-information"}, and ignore listing is enabled.
+     * The {@link RestTemplate} is a <b>hard requirement</b> and as such should be provided.
      */
     public static class Builder extends AbstractCapabilityDiscoveryMode.Builder<RestCapabilityDiscoveryMode> {
 
         private RestTemplate restTemplate;
-        private String messageRoutingInformationEndpoint = "/message-routing-information";
+        private String messageCapabilitiesEndpoint = "/message-routing-information";
 
         @Override
         public Builder serializer(Serializer serializer) {
@@ -179,18 +179,17 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
         }
 
         /**
-         * Sets the {@code messageRoutingInformationEndpoint} of type {@link String}, which is the endpoint where to
-         * retrieve the remote {@link Member}s {@link MemberCapabilities} from. Defaults to endpoint {@code
+         * Sets the {@code messageCapabilitiesEndpoint} of type {@link String}, which is the endpoint where to retrieve
+         * the remote {@link Member}s {@link MemberCapabilities} from. Defaults to endpoint {@code
          * "/message-routing-information"}.
          *
-         * @param messageRoutingInformationEndpoint the endpoint where to retrieve the remote {@link Member}s {@link
-         *                                          MemberCapabilities} from
+         * @param messageCapabilitiesEndpoint the endpoint where to retrieve the remote {@link Member}s {@link
+         *                                    MemberCapabilities} from
          * @return the current Builder instance, for fluent interfacing
          */
-        public Builder messageRoutingInformationEndpoint(String messageRoutingInformationEndpoint) {
-            assertNonEmpty(messageRoutingInformationEndpoint,
-                           "The messageRoutingInformationEndpoint may not be null or empty");
-            this.messageRoutingInformationEndpoint = messageRoutingInformationEndpoint;
+        public Builder messageCapabilitiesEndpoint(String messageCapabilitiesEndpoint) {
+            assertNonEmpty(messageCapabilitiesEndpoint, "The messageCapabilitiesEndpoint may not be null or empty");
+            this.messageCapabilitiesEndpoint = messageCapabilitiesEndpoint;
             return this;
         }
 
