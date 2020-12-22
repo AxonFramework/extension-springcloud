@@ -125,7 +125,7 @@ public class DistributedCommandBusProperties {
          * @deprecated in favor of using the {@link #mode} option, similarly defaulting to a REST approach
          */
         @Deprecated
-        private final boolean fallbackToHttpGet = true;
+        private boolean fallbackToHttpGet = true;
 
         /**
          * The URL used to perform HTTP GET requests on for retrieving another nodes message routing information in a
@@ -134,7 +134,7 @@ public class DistributedCommandBusProperties {
          * @deprecated in favor of using the {@link #restModeUrl} setting
          */
         @Deprecated
-        private final String fallbackUrl = "/message-routing-information";
+        private String fallbackUrl = "/message-routing-information";
 
         /**
          * The URL used to perform HTTP GET requests on for retrieving another node's capabilities in a distributed Axon
@@ -198,9 +198,7 @@ public class DistributedCommandBusProperties {
          */
         @Deprecated
         public void setFallbackToHttpGet(boolean fallbackToHttpGet) {
-            if (fallbackToHttpGet) {
-                setMode(Mode.REST);
-            }
+            this.fallbackToHttpGet = fallbackToHttpGet;
         }
 
         /**
@@ -212,7 +210,7 @@ public class DistributedCommandBusProperties {
          */
         @Deprecated
         public String getFallbackUrl() {
-            return restModeUrl;
+            return fallbackUrl;
         }
 
         /**
@@ -224,7 +222,7 @@ public class DistributedCommandBusProperties {
          */
         @Deprecated
         public void setFallbackUrl(String fallbackUrl) {
-            this.restModeUrl = fallbackUrl;
+            this.fallbackUrl = fallbackUrl;
         }
 
         /**

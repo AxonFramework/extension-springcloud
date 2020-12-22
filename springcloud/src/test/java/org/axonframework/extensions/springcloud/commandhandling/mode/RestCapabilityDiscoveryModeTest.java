@@ -2,6 +2,7 @@ package org.axonframework.extensions.springcloud.commandhandling.mode;
 
 import org.axonframework.commandhandling.distributed.CommandMessageFilter;
 import org.axonframework.commandhandling.distributed.commandfilter.CommandNameFilter;
+import org.axonframework.extensions.springcloud.commandhandling.utils.TestSerializer;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.xml.XStreamSerializer;
 import org.junit.jupiter.api.*;
@@ -32,7 +33,7 @@ class RestCapabilityDiscoveryModeTest {
     private static final int LOAD_FACTOR = 42;
     private static final CommandMessageFilter COMMAND_MESSAGE_FILTER = new CommandNameFilter("my-command-name");
 
-    private final Serializer serializer = XStreamSerializer.defaultSerializer();
+    private final Serializer serializer = TestSerializer.secureXStreamSerializer();
     private final RestTemplate restTemplate = mock(RestTemplate.class);
 
     private CapabilityDiscoveryMode testSubject;

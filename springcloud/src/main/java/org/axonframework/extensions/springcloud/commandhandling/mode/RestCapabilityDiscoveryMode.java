@@ -106,7 +106,7 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
 
     private MemberCapabilities requestMessageRoutingInformation(ServiceInstance serviceInstance) {
         if (isLocalServiceInstance(serviceInstance)) {
-            return localCapabilities;
+            return localCapabilities.get();
         }
         URI destinationUri = UriComponentsBuilder.fromUri(serviceInstance.getUri())
                                                  .path(messageRoutingInformationEndpoint)
@@ -121,8 +121,8 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
     }
 
     private boolean isLocalServiceInstance(ServiceInstance serviceInstance) {
-        return Objects.equals(serviceInstance, localInstance)
-                || Objects.equals(serviceInstance.getUri(), localInstance.getUri());
+        return Objects.equals(serviceInstance, localInstance.get())
+                || Objects.equals(serviceInstance.getUri(), localInstance.get().getUri());
     }
 
     /**
@@ -137,7 +137,7 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
      */
     @GetMapping
     public MemberCapabilities getLocalMemberCapabilities() {
-        return localCapabilities;
+        return localCapabilities.get();
     }
 
     /**

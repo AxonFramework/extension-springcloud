@@ -151,8 +151,29 @@ class SpringCloudCommandRouterTest {
 
     // Reproduces issue #1 (https://github.com/AxonFramework/extension-springcloud/issues/1)
     @Test
-    void testPreRegistrationLocalMemberIgnoredWhenNotPresent() {
-        testSubject.resetLocalMembership(null);
+    void testResetLocalMembershipWithoutAnyUpdateMembershipInvocations() {
+        ArgumentCaptor<ConsistentHash> consistentHashCaptor = ArgumentCaptor.forClass(ConsistentHash.class);
+
+        when(localServiceInstance.getServiceId()).thenReturn(SERVICE_INSTANCE_ID);
+        when(localServiceInstance.getUri()).thenReturn(SERVICE_INSTANCE_URI);
+        when(discoveryClient.getServices()).thenReturn(singletonList(SERVICE_INSTANCE_ID));
+        when(discoveryClient.getInstances(SERVICE_INSTANCE_ID)).thenReturn(singletonList(localServiceInstance));
+        when(capabilityDiscoveryMode.capabilities(localServiceInstance))
+                .thenReturn(Optional.of(DEFAULT_MEMBER_CAPABILITIES));
+
+        // When
+        testSubject.resetLocalMembership(mock(InstanceRegisteredEvent.class));
+
+        verify(discoveryClient).getServices();
+        verify(discoveryClient).getInstances(SERVICE_INSTANCE_ID);
+        verify(capabilityDiscoveryMode).capabilities(localServiceInstance);
+        verify(localServiceInstance).getServiceId();
+        verify(consistentHashChangeListener).onConsistentHashChanged(consistentHashCaptor.capture());
+
+        ConsistentHash resultAfterInstanceRegisteredEvent = consistentHashCaptor.getValue();
+        Set<Member> resultMembersAfter = resultAfterInstanceRegisteredEvent.getMembers();
+        assertFalse(resultMembersAfter.isEmpty());
+        assertLocalMember(resultMembersAfter.iterator().next(), REGISTERED);
     }
 
     @Test
@@ -595,49 +616,41 @@ class SpringCloudCommandRouterTest {
 
     @Test
     void testBuildWithoutDiscoveryClientThrowsAxonConfigurationException() {
-        assertThrows(
-                AxonConfigurationException.class,
-                () -> SpringCloudCommandRouter.builder()
-                                              .localServiceInstance(localServiceInstance)
-                                              .routingStrategy(routingStrategy)
-                                              .capabilityDiscoveryMode(capabilityDiscoveryMode)
-                                              .build()
-        );
+        SpringCloudCommandRouter.Builder builderTestSubject =
+                SpringCloudCommandRouter.builder()
+                                        .localServiceInstance(localServiceInstance)
+                                        .routingStrategy(routingStrategy)
+                                        .capabilityDiscoveryMode(capabilityDiscoveryMode);
+        assertThrows(AxonConfigurationException.class, builderTestSubject::build);
     }
 
     @Test
     void testBuildWithoutLocalServiceInstanceThrowsAxonConfigurationException() {
-        assertThrows(
-                AxonConfigurationException.class,
-                () -> SpringCloudCommandRouter.builder()
-                                              .discoveryClient(discoveryClient)
-                                              .routingStrategy(routingStrategy)
-                                              .capabilityDiscoveryMode(capabilityDiscoveryMode)
-                                              .build()
-        );
+        SpringCloudCommandRouter.Builder builderTestSubject =
+                SpringCloudCommandRouter.builder()
+                                        .discoveryClient(discoveryClient)
+                                        .routingStrategy(routingStrategy)
+                                        .capabilityDiscoveryMode(capabilityDiscoveryMode);
+        assertThrows(AxonConfigurationException.class, builderTestSubject::build);
     }
 
     @Test
     void testBuildWithoutRoutingStrategyThrowsAxonConfigurationException() {
-        assertThrows(
-                AxonConfigurationException.class,
-                () -> SpringCloudCommandRouter.builder()
-                                              .discoveryClient(discoveryClient)
-                                              .localServiceInstance(localServiceInstance)
-                                              .capabilityDiscoveryMode(capabilityDiscoveryMode)
-                                              .build()
-        );
+        SpringCloudCommandRouter.Builder builderTestSubject =
+                SpringCloudCommandRouter.builder()
+                                        .discoveryClient(discoveryClient)
+                                        .localServiceInstance(localServiceInstance)
+                                        .capabilityDiscoveryMode(capabilityDiscoveryMode);
+        assertThrows(AxonConfigurationException.class, builderTestSubject::build);
     }
 
     @Test
     void testBuildWithoutCapabilityDiscoveryModeThrowsAxonConfigurationException() {
-        assertThrows(
-                AxonConfigurationException.class,
-                () -> SpringCloudCommandRouter.builder()
-                                              .discoveryClient(discoveryClient)
-                                              .localServiceInstance(localServiceInstance)
-                                              .routingStrategy(routingStrategy)
-                                              .build()
-        );
+        SpringCloudCommandRouter.Builder builderTestSubject =
+                SpringCloudCommandRouter.builder()
+                                        .discoveryClient(discoveryClient)
+                                        .localServiceInstance(localServiceInstance)
+                                        .routingStrategy(routingStrategy);
+        assertThrows(AxonConfigurationException.class, builderTestSubject::build);
     }
 }

@@ -86,15 +86,15 @@ class SpringCloudAutoConfigurationTest {
     void testDefaultSpringCloudAutoConfiguration() {
         contextRunner.run(context -> {
             assertThat(context).getBeanNames(RoutingStrategy.class)
-                               .hasSize(0);
+                               .isEmpty();
             assertThat(context).getBeanNames(RestTemplate.class)
-                               .hasSize(0);
+                               .isEmpty();
             assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
-                               .hasSize(0);
+                               .isEmpty();
             assertThat(context).getBeanNames(CommandRouter.class)
-                               .hasSize(0);
+                               .isEmpty();
             assertThat(context).getBeanNames(CommandBusConnector.class)
-                               .hasSize(0);
+                               .isEmpty();
 
             assertThat(context).getBeanNames(CommandBus.class)
                                .hasSize(1);

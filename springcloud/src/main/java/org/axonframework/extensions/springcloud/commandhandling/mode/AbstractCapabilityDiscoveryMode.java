@@ -23,6 +23,7 @@ import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.xml.XStreamSerializer;
 import org.springframework.cloud.client.ServiceInstance;
 
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
 import static org.axonframework.common.BuilderUtils.assertNonNull;
@@ -41,8 +42,8 @@ public abstract class AbstractCapabilityDiscoveryMode<B extends CapabilityDiscov
 
     protected final Serializer serializer;
 
-    protected volatile ServiceInstance localInstance;
-    protected volatile MemberCapabilities localCapabilities;
+    protected AtomicReference<ServiceInstance> localInstance;
+    protected AtomicReference<MemberCapabilities> localCapabilities;
 
     /**
      * Instantiate a {@link AbstractCapabilityDiscoveryMode} based on the fields contained in the {@link Builder}.
@@ -52,15 +53,16 @@ public abstract class AbstractCapabilityDiscoveryMode<B extends CapabilityDiscov
     protected AbstractCapabilityDiscoveryMode(Builder<B> builder) {
         builder.validate();
         serializer = builder.serializerSupplier.get();
-        localCapabilities = DefaultMemberCapabilities.INCAPABLE_MEMBER;
+        localInstance = new AtomicReference<>();
+        localCapabilities = new AtomicReference<>(DefaultMemberCapabilities.INCAPABLE_MEMBER);
     }
 
     @Override
     public void updateLocalCapabilities(ServiceInstance localInstance,
                                         int loadFactor,
                                         CommandMessageFilter commandFilter) {
-        this.localInstance = localInstance;
-        this.localCapabilities = new DefaultMemberCapabilities(loadFactor, commandFilter);
+        this.localInstance.getAndUpdate(old -> localInstance);
+        this.localCapabilities.getAndUpdate(old -> new DefaultMemberCapabilities(loadFactor, commandFilter));
     }
 
     /**
@@ -71,7 +73,7 @@ public abstract class AbstractCapabilityDiscoveryMode<B extends CapabilityDiscov
      *
      * @param <B> generic defining the type of {@link CapabilityDiscoveryMode} this builder will create
      */
-    protected static abstract class Builder<B extends CapabilityDiscoveryMode> {
+    protected abstract static class Builder<B extends CapabilityDiscoveryMode> {
 
         private Supplier<Serializer> serializerSupplier = XStreamSerializer::defaultSerializer;
         private boolean ignoreListingEnabled = true;
