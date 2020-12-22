@@ -16,90 +16,50 @@
 
 package org.axonframework.extensions.springcloud.commandhandling;
 
-import org.axonframework.commandhandling.distributed.CommandMessageFilter;
 import org.axonframework.commandhandling.distributed.ConsistentHashChangeListener;
-import org.axonframework.commandhandling.distributed.Member;
 import org.axonframework.commandhandling.distributed.RoutingStrategy;
 import org.axonframework.commandhandling.distributed.commandfilter.DenyAll;
 import org.axonframework.common.AxonConfigurationException;
+import org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabilityDiscoveryMode;
 import org.axonframework.serialization.Serializer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.serviceregistry.Registration;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
-import java.net.URI;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Predicate;
 
+import static org.axonframework.common.BuilderUtils.assertNonEmpty;
 import static org.axonframework.common.BuilderUtils.assertNonNull;
-import static org.axonframework.common.BuilderUtils.assertThat;
 
 /**
- * Implementation of the {@link SpringCloudCommandRouter} which has a
- * backup mechanism to provide Message Routing Information for other nodes and to retrieve Message Routing Information
- * from other Axon nodes.
- * <p>
- * It is annotated with the {@link org.springframework.web.bind.annotation.RestController} and contains the
- * {@link org.springframework.web.bind.annotation.GetMapping} annotated
- * {@link SpringCloudHttpBackupCommandRouter#getLocalMessageRoutingInformation()} function to have a queryable place to
- * retrieve this node its Message Routing Information.
- * The default endpoint for this is {@code "/message-routing-information"}.
- * To configure this endpoint the "axon.distributed.spring-cloud.fallback-url" application property should be adjusted.
- * <p>
- * For retrieving the Message Routing Information from other Axon nodes, it uses a
- * {@link org.springframework.web.client.RestTemplate} to request Message Routing Information through an override of the
- * {@link SpringCloudHttpBackupCommandRouter#getMessageRoutingInformation(ServiceInstance)} function.
+ * Implementation of the {@link SpringCloudCommandRouter} which has a backup mechanism to provide message routing
+ * information for other nodes and to retrieve message routing information from other Axon nodes. Used to be a {@link
+ * org.springframework.web.bind.annotation.RestController} annotated component, but this has been removed entirely in
+ * favor of the new {@link RestCapabilityDiscoveryMode}. As such, this implementation is no more than a wrapper around
+ * the {@link SpringCloudCommandRouter} which forces the usages of the {@code RestCapabilityDiscoveryMode}. Due to this,
+ * it has been deprecated.
  *
  * @author Steven van Beelen
  * @since 3.1
- * @deprecated in favor of using the regular {@link SpringCloudCommandRouter} with the {@link org.axonframework.extensions.springcloud.commandhandling.capabilitydiscoverymode.RestCapabilityDiscoveryMode}.
+ * @deprecated in favor of using the regular {@link SpringCloudCommandRouter} with the {@link
+ * org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabilityDiscoveryMode}.
  */
 @Deprecated
-// TODO: 21-08-20 Deprecate, or remove entirely? We did a breaking change to the Mongo Extensions 4.4 too, granted it being smaller.
-@RestController
-@RequestMapping("${axon.distributed.spring-cloud.fallback-url:/message-routing-information}")
 public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter {
-
-    private static final Logger logger = LoggerFactory.getLogger(SpringCloudHttpBackupCommandRouter.class);
-
-    private static final Predicate<ServiceInstance> ACCEPT_ALL_INSTANCES_FILTER = serviceInstance -> true;
-
-    private final RestTemplate restTemplate;
-    private final String messageRoutingInformationEndpoint;
-    private final MessageRoutingInformation unreachableService;
-    private final boolean enforceHttpDiscovery;
-
-    private volatile MessageRoutingInformation messageRoutingInfo;
 
     /**
      * Instantiate a {@link SpringCloudHttpBackupCommandRouter} based on the fields contained in the {@link Builder}.
      * <p>
-     * Will assert that the {@link RestTemplate} is not {@code null} and that the
-     * {@code messageRoutingInformationEndpoint} is not {@code null} and empty. This assertion will throw an
-     * {@link AxonConfigurationException} if either of them asserts to {@code true}. All asserts performed by
-     * the {@link SpringCloudCommandRouter.Builder} are also taken into account with identical consequences.
+     * Will assert that the {@link RestTemplate} is not {@code null} and that the {@code
+     * messageRoutingInformationEndpoint} is not {@code null} and empty. This assertion will throw an {@link
+     * AxonConfigurationException} if either of them asserts to {@code true}. All asserts performed by the {@link
+     * SpringCloudCommandRouter.Builder} are also taken into account with identical consequences.
      *
      * @param builder the {@link Builder} used to instantiate a {@link SpringCloudHttpBackupCommandRouter} instance
      */
     protected SpringCloudHttpBackupCommandRouter(Builder builder) {
         super(builder);
-        this.restTemplate = builder.restTemplate;
-        this.messageRoutingInformationEndpoint = builder.messageRoutingInformationEndpoint;
-        this.enforceHttpDiscovery = builder.enforceHttpDiscovery;
-        messageRoutingInfo = null;
-        unreachableService = new MessageRoutingInformation(0, DenyAll.INSTANCE, serializer);
     }
 
     /**
@@ -107,10 +67,9 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
      * <p>
      * The {@code serviceInstanceFilter} is defaulted to a {@link Predicate} which always returns {@code true}, the
      * {@link ConsistentHashChangeListener} to a no-op solution and the {@code messageRoutingInformationEndpoint} to
-     * {@code "/message-routing-information"}.
-     * The {@link DiscoveryClient}, {@code localServiceInstance} of type {@link Registration}, the
-     * {@link RoutingStrategy}, {@link RestTemplate} and {@code messageRoutingInformationEndpoint} are <b>hard
-     * requirements</b> and as such should be provided.
+     * {@code "/message-routing-information"}. The {@link DiscoveryClient}, {@code localServiceInstance} of type {@link
+     * Registration}, the {@link RoutingStrategy}, {@link RestTemplate} and {@code messageRoutingInformationEndpoint}
+     * are <b>hard requirements</b> and as such should be provided.
      *
      * @return a Builder to be able to create a {@link SpringCloudHttpBackupCommandRouter}
      */
@@ -118,80 +77,17 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
         return new Builder();
     }
 
-    @Override
-    public void updateMembership(int loadFactor, CommandMessageFilter commandFilter) {
-        messageRoutingInfo = new MessageRoutingInformation(loadFactor, commandFilter, serializer);
-        super.updateMembership(loadFactor, commandFilter);
-    }
-
     /**
      * Get the local {@link MessageRoutingInformation}, thus the MessageRoutingInformation of the node this
-     * CommandRouter is a part of. Can either be called directly or through a GET operation on the specified
-     * {@code messageRoutingInformationEndpoint} of this node.
+     * CommandRouter is a part of. Can either be called directly or through a GET operation on the specified {@code
+     * messageRoutingInformationEndpoint} of this node.
      *
-     * @return The {@link MessageRoutingInformation} if the node this CommandRouter implementation is part of.
+     * @return the {@link MessageRoutingInformation} if the node this CommandRouter implementation is part of
+     * @deprecated in favor of the {@link RestCapabilityDiscoveryMode#getLocalMemberCapabilities()} method
      */
-    @GetMapping
+    @Deprecated
     public MessageRoutingInformation getLocalMessageRoutingInformation() {
-        return messageRoutingInfo;
-    }
-
-//    @Override
-//    protected Optional<MessageRoutingInformation> getMessageRoutingInformation(ServiceInstance serviceInstance) {
-//        if (enforceHttpDiscovery) {
-//            return requestMessageRoutingInformation(serviceInstance);
-//        }
-//
-//        Optional<MessageRoutingInformation> defaultMessageRoutingInfo =
-//                super.getMessageRoutingInformation(serviceInstance);
-//        return defaultMessageRoutingInfo.isPresent() ?
-//                defaultMessageRoutingInfo : requestMessageRoutingInformation(serviceInstance);
-//    }
-
-    private Optional<MessageRoutingInformation> requestMessageRoutingInformation(ServiceInstance serviceInstance) {
-        Member member = buildMember(serviceInstance);
-        if (member.local()) {
-            return Optional.of(getLocalMessageRoutingInformation());
-        }
-
-        URI endpoint = member.getConnectionEndpoint(URI.class)
-                             .orElseThrow(() -> new IllegalArgumentException(String.format(
-                                     "No Connection Endpoint found in Member [%s] for protocol [%s] to send a " +
-                                             "%s request to", member,
-                                     URI.class, MessageRoutingInformation.class.getSimpleName()
-                             )));
-        URI destinationUri = buildURIForPath(endpoint, messageRoutingInformationEndpoint);
-
-        try {
-            ResponseEntity<MessageRoutingInformation> responseEntity = restTemplate.exchange(destinationUri,
-                                                                                             HttpMethod.GET,
-                                                                                             HttpEntity.EMPTY,
-                                                                                             MessageRoutingInformation.class);
-
-            return Optional.ofNullable(responseEntity.getBody());
-        } catch (HttpClientErrorException e) {
-            logger.info(
-                    "Blacklisting Service [" + serviceInstance.getServiceId() + "], "
-                            + "as requesting message routing information from it resulted in an exception.",
-                    logger.isDebugEnabled() ? e : null
-            );
-            return Optional.empty();
-        } catch (Exception e) {
-            logger.info(
-                    "Failed to receive message routing information from Service ["
-                            + serviceInstance.getServiceId() + "] due to an exception. "
-                            + "Will temporarily set this instance to deny all incoming messages",
-                    logger.isDebugEnabled() ? e : null
-            );
-            return Optional.of(unreachableService);
-        }
-    }
-
-    private static URI buildURIForPath(URI uri, String appendToPath) {
-        return UriComponentsBuilder.fromUri(uri)
-                                   .path(appendToPath)
-                                   .build()
-                                   .toUri();
+        return new MessageRoutingInformation(0, DenyAll.INSTANCE, serializer);
     }
 
     /**
@@ -199,20 +95,14 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
      * <p>
      * The {@code serviceInstanceFilter} is defaulted to a {@link Predicate} which always returns {@code true}, the
      * {@link ConsistentHashChangeListener} to a no-op solution and the {@code messageRoutingInformationEndpoint} to
-     * {@code "/message-routing-information"}.
-     * The {@link DiscoveryClient}, {@code localServiceInstance} of type {@link Registration}, the
-     * {@link RoutingStrategy}, {@link RestTemplate} and {@code messageRoutingInformationEndpoint} are <b>hard
-     * requirements</b> and as such should be provided.
+     * {@code "/message-routing-information"}. The {@link DiscoveryClient}, {@code localServiceInstance} of type {@link
+     * Registration}, the {@link RoutingStrategy}, {@link RestTemplate} and {@code messageRoutingInformationEndpoint}
+     * are <b>hard requirements</b> and as such should be provided.
      */
     public static class Builder extends SpringCloudCommandRouter.Builder {
 
         private RestTemplate restTemplate;
         private String messageRoutingInformationEndpoint = "/message-routing-information";
-        private boolean enforceHttpDiscovery = false;
-
-        public Builder() {
-            serviceInstanceFilter(ACCEPT_ALL_INSTANCES_FILTER);
-        }
 
         @Override
         public Builder discoveryClient(DiscoveryClient discoveryClient) {
@@ -258,11 +148,11 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
         }
 
         /**
-         * Sets the {@link RestTemplate} used as the backup mechanism to request another member's
-         * {@link MessageRoutingInformation} with.
+         * Sets the {@link RestTemplate} used as the backup mechanism to request another member's {@link
+         * MessageRoutingInformation} with.
          *
-         * @param restTemplate the {@link RestTemplate} used as the backup mechanism to request another member's
-         *                     {@link MessageRoutingInformation} with.
+         * @param restTemplate the {@link RestTemplate} used as the backup mechanism to request another member's {@link
+         *                     MessageRoutingInformation} with.
          * @return the current Builder instance, for fluent interfacing
          */
         public Builder restTemplate(RestTemplate restTemplate) {
@@ -273,16 +163,18 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
 
         /**
          * Sets the {@code messageRoutingInformationEndpoint} of type {@link String}, which is the endpoint where to
-         * retrieve the another nodes message routing information from. Defaults to endpoint
-         * {@code "/message-routing-information"}.
+         * retrieve the another nodes message routing information from. Defaults to endpoint {@code
+         * "/message-routing-information"}.
          *
          * @param messageRoutingInformationEndpoint the endpoint where to retrieve the another nodes message routing
          *                                          information from
          * @return the current Builder instance, for fluent interfacing
          */
         public Builder messageRoutingInformationEndpoint(String messageRoutingInformationEndpoint) {
-            assertMessageRoutingInfoEndpoint(messageRoutingInformationEndpoint,
-                                             "The messageRoutingInformationEndpoint may not be null or empty");
+            assertNonEmpty(
+                    messageRoutingInformationEndpoint,
+                    "The messageRoutingInformationEndpoint may not be null or empty"
+            );
             this.messageRoutingInformationEndpoint = messageRoutingInformationEndpoint;
             return this;
         }
@@ -294,9 +186,11 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
          * {@code MessageRoutingInformation} being shared.
          *
          * @return the current Builder instance, for fluent interfacing
+         * @deprecated in favor of using the {@link SpringCloudCommandRouter} in combination with the {@link
+         * RestCapabilityDiscoveryMode}
          */
+        @Deprecated
         public Builder enforceHttpDiscovery() {
-            this.enforceHttpDiscovery = true;
             return this;
         }
 
@@ -313,14 +207,19 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
         protected void validate() {
             super.validate();
             assertNonNull(restTemplate, "The RestTemplate is a hard requirement and should be provided");
-            assertMessageRoutingInfoEndpoint(
+            assertNonEmpty(
                     messageRoutingInformationEndpoint,
                     "The messageRoutingInformationEndpoint is a hard requirement and should be provided"
             );
-        }
 
-        private void assertMessageRoutingInfoEndpoint(String messageRoutingInfoEndpoint, String exceptionMessage) {
-            assertThat(messageRoutingInfoEndpoint, name -> Objects.nonNull(name) && !"".equals(name), exceptionMessage);
+            // Enforce usage of the RestCapabilityDiscoveryMode by setting it regardless of the provided CapabilityDiscoveryMode
+            capabilityDiscoveryMode(
+                    RestCapabilityDiscoveryMode.builder()
+                                               .messageRoutingInformationEndpoint(messageRoutingInformationEndpoint)
+                                               .restTemplate(restTemplate)
+                                               .serializer(serializerSupplier.get())
+                                               .build()
+            );
         }
     }
 }

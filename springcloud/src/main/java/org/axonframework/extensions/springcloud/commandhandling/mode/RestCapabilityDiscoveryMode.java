@@ -151,7 +151,6 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
     public static class Builder extends AbstractCapabilityDiscoveryMode.Builder<RestCapabilityDiscoveryMode> {
 
         private RestTemplate restTemplate;
-        // TODO: 21-08-20 Should we change this endpoint to a different one to not collide with the SpringCloudHttpBackupCommandRouter?
         private String messageRoutingInformationEndpoint = "/message-routing-information";
 
         @Override

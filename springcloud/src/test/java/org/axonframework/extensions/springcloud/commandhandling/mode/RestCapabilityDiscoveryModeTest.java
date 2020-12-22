@@ -17,6 +17,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.net.URI;
 import java.util.Optional;
 
+import static org.axonframework.extensions.springcloud.commandhandling.mode.DefaultMemberCapabilities.INCAPABLE_MEMBER;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -50,7 +51,13 @@ class RestCapabilityDiscoveryModeTest {
     }
 
     @Test
-    void testGetLocalMemberCapabilities() {
+    void testGetLocalMemberCapabilitiesReturnsIncapableMemberIfLocalCapabilitiesIsNeverUpdated() {
+        MemberCapabilities result = ((RestCapabilityDiscoveryMode) testSubject).getLocalMemberCapabilities();
+        assertEquals(INCAPABLE_MEMBER, result);
+    }
+
+    @Test
+    void testGetLocalMemberCapabilitiesReturnsUpdatedLocalCapabilities() {
         testSubject.updateLocalCapabilities(localInstance, LOAD_FACTOR, COMMAND_MESSAGE_FILTER);
 
         MemberCapabilities result = ((RestCapabilityDiscoveryMode) testSubject).getLocalMemberCapabilities();

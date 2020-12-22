@@ -332,7 +332,7 @@ public class SpringCloudCommandRouter implements CommandRouter {
         private Registration localServiceInstance;
         private RoutingStrategy routingStrategy;
         private CapabilityDiscoveryMode capabilityDiscoveryMode;
-        private Supplier<Serializer> serializerSupplier = XStreamSerializer::defaultSerializer;
+        protected Supplier<Serializer> serializerSupplier = XStreamSerializer::defaultSerializer;
         private Predicate<ServiceInstance> serviceInstanceFilter = serviceInstance -> true;
         private ConsistentHashChangeListener consistentHashChangeListener = ConsistentHashChangeListener.noOp();
         private String contextRootMetadataPropertyName;
@@ -409,7 +409,7 @@ public class SpringCloudCommandRouter implements CommandRouter {
 
         /**
          * Sets a {@link Predicate} of generic type {@link ServiceInstance}, used to filter out {@code ServiceInstance}s
-         * from the membership update loop.
+         * from the membership update loop. Defaults to allow all {@code ServiceInstance}s.
          *
          * @param serviceInstanceFilter the {@link Predicate} of generic type {@link ServiceInstance}, used to filter
          *                              out ServiceInstances from the membership update loop
