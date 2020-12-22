@@ -19,7 +19,6 @@ package org.axonframework.extensions.springcloud.commandhandling.mode;
 import org.axonframework.commandhandling.distributed.CommandMessageFilter;
 import org.axonframework.commandhandling.distributed.Member;
 import org.axonframework.common.AxonConfigurationException;
-import org.axonframework.extensions.springcloud.commandhandling.MessageRoutingInformation;
 import org.axonframework.serialization.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,15 +127,14 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
     }
 
     /**
-     * Get the local membership information as a {@link MessageRoutingInformation}, thus the {@code
-     * MessageRoutingInformation} of the node this {@link CapabilityDiscoveryMode} is a part of. The local membership
-     * information is set and updated through the {@link #updateLocalCapabilities(ServiceInstance, int,
-     * CommandMessageFilter)} method.
+     * Get the local membership information as a {@link MemberCapabilities}, thus the {@code MemberCapabilities} of the
+     * node this {@link CapabilityDiscoveryMode} is a part of. The local membership information is set and updated
+     * through the {@link #updateLocalCapabilities(ServiceInstance, int, CommandMessageFilter)} method.
      * <p>
      * Can either be called directly or through a GET operation on the specified {@code
      * messageRoutingInformationEndpoint} of this node.
      *
-     * @return the {@link MessageRoutingInformation} if the node this CommandRouter implementation is part of
+     * @return the {@link MemberCapabilities} if the node this CommandRouter implementation is part of
      */
     @GetMapping
     public MemberCapabilities getLocalMemberCapabilities() {
@@ -169,11 +167,10 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
         }
 
         /**
-         * Sets the {@link RestTemplate} used to request remote {@link Member}s their {@link MessageRoutingInformation}
-         * with.
+         * Sets the {@link RestTemplate} used to request remote {@link Member}s their {@link MemberCapabilities} with.
          *
          * @param restTemplate the {@link RestTemplate} used to request remote {@link Member}s their {@link
-         *                     MessageRoutingInformation} with
+         *                     MemberCapabilities} with
          * @return the current Builder instance, for fluent interfacing
          */
         public Builder restTemplate(RestTemplate restTemplate) {
@@ -184,11 +181,11 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
 
         /**
          * Sets the {@code messageRoutingInformationEndpoint} of type {@link String}, which is the endpoint where to
-         * retrieve the remote {@link Member}s {@link MessageRoutingInformation} from. Defaults to endpoint {@code
+         * retrieve the remote {@link Member}s {@link MemberCapabilities} from. Defaults to endpoint {@code
          * "/message-routing-information"}.
          *
          * @param messageRoutingInformationEndpoint the endpoint where to retrieve the remote {@link Member}s {@link
-         *                                          MessageRoutingInformation} from
+         *                                          MemberCapabilities} from
          * @return the current Builder instance, for fluent interfacing
          */
         public Builder messageRoutingInformationEndpoint(String messageRoutingInformationEndpoint) {

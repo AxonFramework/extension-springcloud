@@ -28,16 +28,15 @@ import java.io.Serializable;
 import java.util.Objects;
 
 /**
- * Object containing the message routing information required by the
- * {@link org.axonframework.commandhandling.distributed.CommandRouter} to decide to whom an incoming
- * {@link CommandMessage} should be routed.
- * Holds the {@code loadFactor} and {@code commandFilter}, which respectively denote the desired load and set of
- * CommandMessages a node can(not) handle.
+ * Object containing the message routing information required by the {@link org.axonframework.commandhandling.distributed.CommandRouter}
+ * to decide to whom an incoming {@link CommandMessage} should be routed. Holds the {@code loadFactor} and {@code
+ * commandFilter}, which respectively denote the desired load and set of CommandMessages a node can(not) handle.
  *
  * @author Steven van Beelen
  * @since 3.1
+ * @deprecated in favor of {@link org.axonframework.extensions.springcloud.commandhandling.mode.MemberCapabilities}
  */
-// TODO: 21-08-20 Might be reasonable to reuse this in the MemberCapabilities object, as it is virtually the same...
+@Deprecated
 public class MessageRoutingInformation implements Serializable {
 
     private final int loadFactor;

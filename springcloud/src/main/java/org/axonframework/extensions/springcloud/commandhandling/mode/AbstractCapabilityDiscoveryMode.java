@@ -18,9 +18,7 @@ package org.axonframework.extensions.springcloud.commandhandling.mode;
 
 import org.axonframework.commandhandling.distributed.CommandMessageFilter;
 import org.axonframework.commandhandling.distributed.Member;
-import org.axonframework.commandhandling.distributed.RoutingStrategy;
 import org.axonframework.common.AxonConfigurationException;
-import org.axonframework.extensions.springcloud.commandhandling.MessageRoutingInformation;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.xml.XStreamSerializer;
 import org.springframework.cloud.client.ServiceInstance;
@@ -31,8 +29,8 @@ import static org.axonframework.common.BuilderUtils.assertNonNull;
 
 /**
  * Abstract implementation of the {@link CapabilityDiscoveryMode} providing discovery basics like the {@link Serializer}
- * for the {@link MessageRoutingInformation} and the option to enabled or disable ignore listing. Ignore listing is
- * enabled by default, which ensure the {@link AbstractCapabilityDiscoveryMode} will be wrapped by a {@link
+ * for the {@link MemberCapabilities} and the option to enabled or disable ignore listing. Ignore listing is enabled by
+ * default, which ensure the {@link AbstractCapabilityDiscoveryMode} will be wrapped by a {@link
  * IgnoreListingCapabilityDiscoveryMode}.
  *
  * @author Steven van Beelen
@@ -70,6 +68,7 @@ public abstract class AbstractCapabilityDiscoveryMode<B extends CapabilityDiscov
      * <p>
      * The {@link Serializer} is defaulted to a {@link org.axonframework.serialization.xml.XStreamSerializer} instance
      * and ignore listing is enabled.
+     *
      * @param <B> generic defining the type of {@link CapabilityDiscoveryMode} this builder will create
      */
     protected static abstract class Builder<B extends CapabilityDiscoveryMode> {
@@ -93,7 +92,7 @@ public abstract class AbstractCapabilityDiscoveryMode<B extends CapabilityDiscov
 
         /**
          * Disables the ignore listing feature, which moves {@link Member}s which are incapable of returning any {@link
-         * MessageRoutingInformation} to a dedicated list to not be ignored for the time being.
+         * MemberCapabilities} to a dedicated list to not be ignored for the time being.
          *
          * @return the current Builder instance, for fluent interfacing
          */
