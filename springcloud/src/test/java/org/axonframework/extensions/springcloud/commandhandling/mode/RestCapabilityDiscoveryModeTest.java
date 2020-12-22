@@ -5,9 +5,7 @@ import org.axonframework.commandhandling.distributed.commandfilter.CommandNameFi
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.xml.XStreamSerializer;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.*;
 import org.mockito.*;
-import org.mockito.junit.jupiter.*;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -27,7 +25,6 @@ import static org.mockito.Mockito.*;
  *
  * @author Steven van Beelen
  */
-@ExtendWith(MockitoExtension.class)
 class RestCapabilityDiscoveryModeTest {
 
     private static final String CUSTOM_ENDPOINT = "/our-custom-endpoint";
@@ -35,19 +32,15 @@ class RestCapabilityDiscoveryModeTest {
     private static final CommandMessageFilter COMMAND_MESSAGE_FILTER = new CommandNameFilter("my-command-name");
 
     private final Serializer serializer = XStreamSerializer.defaultSerializer();
-    @Mock
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate = mock(RestTemplate.class);
 
     private CapabilityDiscoveryMode testSubject;
 
-    @Mock
-    private ServiceInstance localInstance;
-    @Captor
-    private ArgumentCaptor<URI> uriArgumentCaptor;
+    private final ServiceInstance localInstance = mock(ServiceInstance.class);
+    private final ArgumentCaptor<URI> uriArgumentCaptor = ArgumentCaptor.forClass(URI.class);
 
     @BeforeEach
     void setUp() {
-
         testSubject = RestCapabilityDiscoveryMode.builder()
                                                  .serializer(serializer)
                                                  .restTemplate(restTemplate)
