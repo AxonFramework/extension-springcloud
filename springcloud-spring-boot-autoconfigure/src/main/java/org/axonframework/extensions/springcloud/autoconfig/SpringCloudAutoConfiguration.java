@@ -21,13 +21,15 @@ import org.axonframework.commandhandling.distributed.CommandBusConnector;
 import org.axonframework.commandhandling.distributed.CommandRouter;
 import org.axonframework.commandhandling.distributed.DistributedCommandBus;
 import org.axonframework.commandhandling.distributed.RoutingStrategy;
+import org.axonframework.common.AxonConfigurationException;
 import org.axonframework.extensions.springcloud.DistributedCommandBusProperties;
 import org.axonframework.extensions.springcloud.commandhandling.SpringCloudCommandRouter;
-import org.axonframework.extensions.springcloud.commandhandling.SpringCloudHttpBackupCommandRouter;
 import org.axonframework.extensions.springcloud.commandhandling.SpringHttpCommandBusConnector;
+import org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode;
+import org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabilityDiscoveryMode;
+import org.axonframework.extensions.springcloud.commandhandling.mode.SimpleCapabilityDiscoveryMode;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.springboot.autoconfig.InfraConfiguration;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
@@ -37,7 +39,6 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
-import org.springframework.cloud.client.discovery.noop.NoopDiscoveryClientAutoConfiguration;
 import org.springframework.cloud.client.discovery.simple.SimpleDiscoveryClientAutoConfiguration;
 import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.annotation.Bean;
@@ -45,10 +46,16 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * Auto configuration class for the defining a {@link SpringCloudCommandRouter} and {@link
+ * SpringHttpCommandBusConnector} to be used in a {@link DistributedCommandBus}.
+ *
+ * @author Steven van Beelen
+ * @since 3.0
+ */
 @Configuration
 @AutoConfigureAfter({
         RoutingStrategyAutoConfiguration.class,
-        NoopDiscoveryClientAutoConfiguration.class,
         SimpleDiscoveryClientAutoConfiguration.class
 })
 @AutoConfigureBefore(InfraConfiguration.class)
@@ -56,68 +63,18 @@ import org.springframework.web.client.RestTemplate;
 @ConditionalOnProperty("axon.distributed.enabled")
 @ConditionalOnClass(name = {
         "org.axonframework.extensions.springcloud.commandhandling.SpringCloudCommandRouter",
-        "org.axonframework.extensions.springcloud.commandhandling.SpringCloudHttpBackupCommandRouter",
         "org.axonframework.extensions.springcloud.commandhandling.SpringHttpCommandBusConnector",
         "org.springframework.cloud.client.discovery.DiscoveryClient",
         "org.springframework.web.client.RestTemplate"
 })
 public class SpringCloudAutoConfiguration {
 
-    @Autowired
-    private DistributedCommandBusProperties properties;
+    private final DistributedCommandBusProperties properties;
+    private final DistributedCommandBusProperties.SpringCloudProperties springCloudProperties;
 
-    @Bean
-    @Primary
-    @ConditionalOnMissingBean(CommandRouter.class)
-    @ConditionalOnBean(DiscoveryClient.class)
-    @ConditionalOnProperty(value = "axon.distributed.spring-cloud.fallback-to-http-get", matchIfMissing = true)
-    public SpringCloudHttpBackupCommandRouter springCloudHttpBackupCommandRouter(DiscoveryClient discoveryClient,
-                                                                                 Registration localServiceInstance,
-                                                                                 RestTemplate restTemplate,
-                                                                                 RoutingStrategy routingStrategy,
-                                                                                 Serializer serializer) {
-        return SpringCloudHttpBackupCommandRouter.builder()
-                                                 .discoveryClient(discoveryClient)
-                                                 .localServiceInstance(localServiceInstance)
-                                                 .routingStrategy(routingStrategy)
-                                                 .restTemplate(restTemplate)
-                                                 .messageRoutingInformationEndpoint(
-                                                         properties.getSpringCloud().getFallbackUrl()
-                                                 )
-                                                 .contextRootMetadataPropertyName(
-                                                         properties.getSpringCloud()
-                                                                   .getContextRootMetadataPropertyName()
-                                                 )
-                                                 .serializer(serializer)
-                                                 .build();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean
-    @ConditionalOnBean(DiscoveryClient.class)
-    public CommandRouter springCloudCommandRouter(DiscoveryClient discoveryClient,
-                                                  Registration localServiceInstance,
-                                                  RoutingStrategy routingStrategy,
-                                                  Serializer serializer) {
-        return SpringCloudCommandRouter.builder()
-                                       .discoveryClient(discoveryClient)
-                                       .localServiceInstance(localServiceInstance)
-                                       .routingStrategy(routingStrategy)
-                                       .serializer(serializer)
-                                       .build();
-    }
-
-    @Bean
-    @ConditionalOnMissingBean(CommandBusConnector.class)
-    public SpringHttpCommandBusConnector springHttpCommandBusConnector(
-            @Qualifier("localSegment") CommandBus localSegment,
-            RestTemplate restTemplate,
-            @Qualifier("messageSerializer") Serializer serializer) {
-        return SpringHttpCommandBusConnector.builder()
-                                            .localCommandBus(localSegment)
-                                            .restOperations(restTemplate)
-                                            .serializer(serializer)
-                                            .build();
+    public SpringCloudAutoConfiguration(DistributedCommandBusProperties properties) {
+        this.properties = properties;
+        this.springCloudProperties = properties.getSpringCloud();
     }
 
     @Bean
@@ -126,18 +83,82 @@ public class SpringCloudAutoConfiguration {
         return new RestTemplate();
     }
 
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+    @Bean
+    @ConditionalOnMissingBean
+    public CapabilityDiscoveryMode capabilityDiscoveryMode(Serializer serializer, RestTemplate restTemplate) {
+        switch (springCloudProperties.getMode()) {
+            case REST:
+                return buildRestCapabilityDiscoveryMode(
+                        RestCapabilityDiscoveryMode.builder(), serializer, restTemplate
+                );
+            case SIMPLE:
+                return buildRestCapabilityDiscoveryMode(
+                        SimpleCapabilityDiscoveryMode.builder(), serializer, restTemplate
+                );
+            default:
+                throw new AxonConfigurationException(
+                        "The configured mode [" + springCloudProperties.getMode() + "] is not supported"
+                );
+        }
+    }
+
+    private CapabilityDiscoveryMode buildRestCapabilityDiscoveryMode(RestCapabilityDiscoveryMode.Builder builder,
+                                                                     Serializer serializer,
+                                                                     RestTemplate restTemplate) {
+        builder.serializer(serializer)
+               .restTemplate(restTemplate)
+               .messageCapabilitiesEndpoint(springCloudProperties.getRestModeUrl());
+        if (springCloudProperties.shouldDisableIgnoreListing()) {
+            builder.disableIgnoreListing();
+        }
+        return builder.build();
+    }
+
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+    @Bean
+    @ConditionalOnMissingBean
+    @ConditionalOnBean(DiscoveryClient.class)
+    public CommandRouter springCloudCommandRouter(DiscoveryClient discoveryClient,
+                                                  Registration localServiceInstance,
+                                                  RoutingStrategy routingStrategy,
+                                                  CapabilityDiscoveryMode capabilityDiscoveryMode,
+                                                  Serializer serializer) {
+        return SpringCloudCommandRouter.builder()
+                                       .discoveryClient(discoveryClient)
+                                       .localServiceInstance(localServiceInstance)
+                                       .routingStrategy(routingStrategy)
+                                       .capabilityDiscoveryMode(capabilityDiscoveryMode)
+                                       .serializer(serializer)
+                                       .build();
+    }
+
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+    @Bean
+    @ConditionalOnMissingBean(CommandBusConnector.class)
+    public SpringHttpCommandBusConnector springHttpCommandBusConnector(
+            @Qualifier("localSegment") CommandBus localSegment,
+            RestTemplate restTemplate,
+            @Qualifier("messageSerializer") Serializer serializer
+    ) {
+        return SpringHttpCommandBusConnector.builder()
+                                            .localCommandBus(localSegment)
+                                            .restOperations(restTemplate)
+                                            .serializer(serializer)
+                                            .build();
+    }
+
     @Bean
     @Primary
     @ConditionalOnBean(CommandBusConnector.class)
     @ConditionalOnMissingBean
     public DistributedCommandBus distributedCommandBus(CommandRouter commandRouter,
-                                                       CommandBusConnector commandBusConnector,
-                                                       DistributedCommandBusProperties distributedCommandBusProperties) {
+                                                       CommandBusConnector commandBusConnector) {
         DistributedCommandBus commandBus = DistributedCommandBus.builder()
                                                                 .commandRouter(commandRouter)
                                                                 .connector(commandBusConnector)
                                                                 .build();
-        commandBus.updateLoadFactor(distributedCommandBusProperties.getLoadFactor());
+        commandBus.updateLoadFactor(properties.getLoadFactor());
         return commandBus;
     }
 }
