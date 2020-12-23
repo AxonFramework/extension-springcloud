@@ -33,9 +33,9 @@ import java.util.Set;
  * ServiceInstance} might be added to the ignored instance list.
  * <p>
  * {@code ServiceInstance}s are ignored whenever a {@link ServiceInstanceClientException} is thrown, upon which the
- * {@link ServiceInstance#getServiceId()} is stored for subsequent invocation, as services with the same service
- * identifier should behave identical. On the next {@link #capabilities(ServiceInstance)} iteration, the given {@code
- * ServiceInstance} is validated to <b>not</b> be present in the set of ignored service instance identifiers.
+ * {@code ServiceInstance} is stored for subsequent invocation. On the next {@link #capabilities(ServiceInstance)}
+ * iteration, the given {@code ServiceInstance} is validated to <b>not</b> be present in the set of ignored service
+ * instance identifiers.
  *
  * @author Steven van Beelen
  * @since 4.4
@@ -46,7 +46,7 @@ public class IgnoreListingCapabilityDiscoveryMode implements CapabilityDiscovery
 
     private final CapabilityDiscoveryMode delegate;
 
-    private final Set<String> ignoredServiceIds = new HashSet<>();
+    private final Set<ServiceInstance> ignoredServices = new HashSet<>();
 
     /**
      * Build an {@link IgnoreListingCapabilityDiscoveryMode}, wrapping the given {@code delegate}.
@@ -67,31 +67,46 @@ public class IgnoreListingCapabilityDiscoveryMode implements CapabilityDiscovery
     @Override
     public Optional<MemberCapabilities> capabilities(ServiceInstance serviceInstance)
             throws ServiceInstanceClientException {
-        cleanIgnoredInstanceSet(serviceInstance);
-        if (isIgnored(serviceInstance)) {
+        if (shouldIgnore(serviceInstance)) {
             return Optional.empty();
         }
 
         try {
             return delegate.capabilities(serviceInstance);
         } catch (ServiceInstanceClientException e) {
-            ignoredServiceIds.add(serviceInstance.getServiceId());
+            ignoredServices.add(serviceInstance);
             logger.info("Added ServiceInstance [{}] under host [{}] and port [{}] to the denied list, "
-                                + "since we could not retrieve the required message routing information from it.",
+                                + "since we could not retrieve the required member capabilities from it.",
                         serviceInstance.getServiceId(), serviceInstance.getHost(), serviceInstance.getPort());
             return Optional.empty();
         }
     }
 
-    private void cleanIgnoredInstanceSet(ServiceInstance serviceInstance) {
-        // TODO: 19-08-20 decide how to clean up old instances
-//        ignoredServiceIds.removeIf(
-//                deniedService -> services.stream().noneMatch(service -> equals(service, deniedService))
-//        );
+    private boolean shouldIgnore(ServiceInstance service) {
+        return ignoredServices.stream().anyMatch(ignoredService -> equals(ignoredService, service));
     }
 
-    private boolean isIgnored(ServiceInstance service) {
-        return ignoredServiceIds.stream()
-                                .anyMatch(ignoredServiceId -> Objects.equals(ignoredServiceId, service.getServiceId()));
+    /**
+     * Implementation of the {@link org.springframework.cloud.client.ServiceInstance} in some cases do no have an {@code
+     * equals()} implementation. Thus we provide our own {@code equals()} function to match a given {@code
+     * ignoredInstance} with another given {@code serviceInstance}. The match is done on the service id, host and port.
+     *
+     * @param serviceInstance A {@link org.springframework.cloud.client.ServiceInstance} to compare with the given
+     *                        {@code ignoredInstance}
+     * @param ignoredInstance A {@link org.springframework.cloud.client.ServiceInstance} to compare with the given
+     *                        {@code serviceInstance}
+     * @return True if both instances match on the service id, host and port, and false if they do not
+     */
+    @SuppressWarnings("SimplifiableIfStatement")
+    private boolean equals(ServiceInstance serviceInstance, ServiceInstance ignoredInstance) {
+        if (serviceInstance == ignoredInstance) {
+            return true;
+        }
+        if (ignoredInstance == null) {
+            return false;
+        }
+        return Objects.equals(serviceInstance.getServiceId(), ignoredInstance.getServiceId())
+                && Objects.equals(serviceInstance.getHost(), ignoredInstance.getHost())
+                && Objects.equals(serviceInstance.getPort(), ignoredInstance.getPort());
     }
 }
