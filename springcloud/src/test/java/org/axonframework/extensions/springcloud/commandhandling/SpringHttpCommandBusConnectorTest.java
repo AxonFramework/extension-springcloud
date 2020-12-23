@@ -35,13 +35,10 @@ import org.axonframework.messaging.RemoteHandlingException;
 import org.axonframework.serialization.SerializedObject;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.json.JacksonSerializer;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatcher;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.*;
+import org.mockito.*;
+import org.mockito.junit.jupiter.*;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -59,25 +56,16 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Collections.singletonMap;
 import static org.axonframework.commandhandling.GenericCommandResultMessage.asCommandResultMessage;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.argThat;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
-@RunWith(MockitoJUnitRunner.class)
-public class SpringHttpCommandBusConnectorTest {
+/**
+ * Test class validating the {@link SpringHttpCommandBusConnector}.
+ *
+ * @author Steven van Beelen
+ */
+@ExtendWith(MockitoExtension.class)
+class SpringHttpCommandBusConnectorTest {
 
     private static final String MEMBER_NAME = "memberName";
     private static final URI ENDPOINT = URI.create("endpoint");
@@ -104,8 +92,8 @@ public class SpringHttpCommandBusConnectorTest {
     @Mock
     private MessageHandler<? super CommandMessage<?>> messageHandler;
 
-    @Before
-    public void setUp() throws Exception {
+    @BeforeEach
+    void setUp() throws Exception {
         serializer = spy(JacksonSerializer.builder().build());
         expectedUri = new URI(ENDPOINT.getScheme(),
                               ENDPOINT.getUserInfo(),
@@ -129,7 +117,7 @@ public class SpringHttpCommandBusConnectorTest {
     }
 
     @Test
-    public void testSendWithoutCallbackSucceeds() {
+    void testSendWithoutCallbackSucceeds() {
         testSubject.send(DESTINATION, COMMAND_MESSAGE);
 
         verify(executor).execute(any());
@@ -142,15 +130,15 @@ public class SpringHttpCommandBusConnectorTest {
                                       eq(expectedHttpEntity), argThat(new ParameterizedTypeReferenceMatcher<>()));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testSendWithoutCallbackThrowsExceptionForMissingDestinationURI() {
+    @Test
+    void testSendWithoutCallbackThrowsExceptionForMissingDestinationURI() {
         SimpleMember<String> faultyDestination = new SimpleMember<>(MEMBER_NAME, null, false, null);
-        testSubject.send(faultyDestination, COMMAND_MESSAGE);
+        assertThrows(IllegalArgumentException.class, () -> testSubject.send(faultyDestination, COMMAND_MESSAGE));
         verify(executor).execute(any());
     }
 
     @Test
-    public void testStopSendingCommands() throws InterruptedException, ExecutionException, TimeoutException {
+    void testStopSendingCommands() throws InterruptedException, ExecutionException, TimeoutException {
         SpringHttpReplyMessage<String> testReplyMessage =
                 new SpringHttpReplyMessage<>(COMMAND_MESSAGE.getIdentifier(), COMMAND_RESULT, serializer);
         ResponseEntity<SpringHttpReplyMessage<String>> testResponseEntity =
@@ -189,7 +177,7 @@ public class SpringHttpCommandBusConnectorTest {
     }
 
     @Test
-    public void testSendWithCallbackSucceedsAndReturnsSucceeded() {
+    void testSendWithCallbackSucceedsAndReturnsSucceeded() {
         SpringHttpReplyMessage<String> testReplyMessage =
                 new SpringHttpReplyMessage<>(COMMAND_MESSAGE.getIdentifier(), COMMAND_RESULT, serializer);
         ResponseEntity<SpringHttpReplyMessage<String>> testResponseEntity =
@@ -249,7 +237,7 @@ public class SpringHttpCommandBusConnectorTest {
     }
 
     @Test
-    public void testSendWithCallbackSucceedsAndReturnsFailed() {
+    void testSendWithCallbackSucceedsAndReturnsFailed() {
         SpringHttpReplyMessage<String> testReplyMessage =
                 new SpringHttpReplyMessage<>(COMMAND_MESSAGE.getIdentifier(),
                                              asCommandResultMessage(COMMAND_ERROR),
@@ -294,7 +282,7 @@ public class SpringHttpCommandBusConnectorTest {
     }
 
     @Test
-    public void testSendWithCallbackSucceedsAndFailsOnParsingResultMessage() {
+    void testSendWithCallbackSucceedsAndFailsOnParsingResultMessage() {
         SpringHttpReplyMessage<String> testReplyMessage =
                 new SpringHttpReplyMessage<>(COMMAND_MESSAGE.getIdentifier(),
                                              asCommandResultMessage(COMMAND_ERROR),
@@ -323,11 +311,12 @@ public class SpringHttpCommandBusConnectorTest {
                 ArgumentCaptor.forClass(CommandResultMessage.class);
         verify(commandCallback).onResult(eq(COMMAND_MESSAGE), commandResultMessageCaptor.capture());
         assertTrue(commandResultMessageCaptor.getValue().isExceptional());
-        assertEquals(CommandDispatchException.class, commandResultMessageCaptor.getValue().exceptionResult().getClass());
+        assertEquals(CommandDispatchException.class,
+                     commandResultMessageCaptor.getValue().exceptionResult().getClass());
     }
 
     @Test
-    public void testSendWithCallbackThrowsExceptionForMissingDestinationURI() {
+    void testSendWithCallbackThrowsExceptionForMissingDestinationURI() {
         SimpleMember<String> faultyDestination = new SimpleMember<>(MEMBER_NAME, null, false, null);
         AtomicReference<CommandResultMessage<?>> result = new AtomicReference<>();
         testSubject.send(faultyDestination, COMMAND_MESSAGE, (c, r) -> result.set(r));
@@ -337,7 +326,7 @@ public class SpringHttpCommandBusConnectorTest {
     }
 
     @Test
-    public void testSubscribeSubscribesCommandHandlerForCommandNameToLocalCommandBus() {
+    void testSubscribeSubscribesCommandHandlerForCommandNameToLocalCommandBus() {
         String expectedCommandName = "commandName";
 
         testSubject.subscribe(expectedCommandName, messageHandler);
@@ -347,7 +336,7 @@ public class SpringHttpCommandBusConnectorTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    public void testReceiveCommandHandlesCommandWithCallbackSucceedsAndCallsSuccess() throws Exception {
+    void testReceiveCommandHandlesCommandWithCallbackSucceedsAndCallsSuccess() throws Exception {
         doAnswer(a -> {
             SpringHttpCommandBusConnector.SpringHttpReplyFutureCallback<String, String> callback =
                     (SpringHttpCommandBusConnector.SpringHttpReplyFutureCallback<String, String>) a.getArguments()[1];
@@ -368,7 +357,7 @@ public class SpringHttpCommandBusConnectorTest {
     }
 
     @Test
-    public void testReceiveCommandHandlesCommandWithCallbackSucceedsAndCallsFailure() throws Exception {
+    void testReceiveCommandHandlesCommandWithCallbackSucceedsAndCallsFailure() throws Exception {
         doAnswer(a -> {
             //noinspection unchecked
             SpringHttpCommandBusConnector.SpringHttpReplyFutureCallback<String, String> callback =
@@ -402,7 +391,7 @@ public class SpringHttpCommandBusConnectorTest {
     }
 
     @Test
-    public void testReceiveCommandHandlesCommandWithCallbackFails() throws Exception {
+    void testReceiveCommandHandlesCommandWithCallbackFails() throws Exception {
         doThrow(RuntimeException.class).when(localCommandBus).dispatch(any(), any());
 
         //noinspection unchecked
@@ -417,7 +406,7 @@ public class SpringHttpCommandBusConnectorTest {
     }
 
     @Test
-    public void testReceiveCommandHandlesCommandWithoutCallback() throws Exception {
+    void testReceiveCommandHandlesCommandWithoutCallback() throws Exception {
         String result = (String) testSubject.receiveCommand(buildDispatchMessage(false)).get();
 
         assertEquals("", result);
@@ -426,7 +415,7 @@ public class SpringHttpCommandBusConnectorTest {
     }
 
     @Test
-    public void testReceiveCommandHandlesCommandWithoutCallbackThrowsException() throws Exception {
+    void testReceiveCommandHandlesCommandWithoutCallbackThrowsException() throws Exception {
         doThrow(RuntimeException.class).when(localCommandBus).dispatch(any());
 
         //noinspection unchecked
@@ -441,7 +430,7 @@ public class SpringHttpCommandBusConnectorTest {
     }
 
     @Test
-    public void testSendWithCallbackToLocalMember() {
+    void testSendWithCallbackToLocalMember() {
         SimpleMember<String> localDestination = new SimpleMember<>(MEMBER_NAME, null, true, null);
         testSubject.send(localDestination, COMMAND_MESSAGE, new NoOpCallback());
 
@@ -450,7 +439,7 @@ public class SpringHttpCommandBusConnectorTest {
     }
 
     @Test
-    public void testSendWithoutCallbackToLocalMember() {
+    void testSendWithoutCallbackToLocalMember() {
         SimpleMember<String> localDestination = new SimpleMember<>(MEMBER_NAME, null, true, null);
         testSubject.send(localDestination, COMMAND_MESSAGE);
 
@@ -459,7 +448,7 @@ public class SpringHttpCommandBusConnectorTest {
     }
 
     @Test
-    public void testLocalSegmentReturnsExpectedCommandBus() {
+    void testLocalSegmentReturnsExpectedCommandBus() {
         Optional<CommandBus> result = testSubject.localSegment();
         assertTrue(result.isPresent());
         assertEquals(localCommandBus, result.get());
