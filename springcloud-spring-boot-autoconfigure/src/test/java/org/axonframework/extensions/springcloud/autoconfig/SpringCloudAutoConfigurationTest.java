@@ -42,7 +42,7 @@ import org.axonframework.common.ReflectionUtils;
 import org.axonframework.extensions.springcloud.commandhandling.SpringCloudCommandRouter;
 import org.axonframework.extensions.springcloud.commandhandling.SpringHttpCommandBusConnector;
 import org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode;
-import org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingCapabilityDiscoveryMode;
+import org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingDiscoveryMode;
 import org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabilityDiscoveryMode;
 import org.axonframework.extensions.springcloud.commandhandling.mode.SimpleCapabilityDiscoveryMode;
 import org.axonframework.springboot.autoconfig.AxonServerAutoConfiguration;
@@ -149,7 +149,7 @@ class SpringCloudAutoConfigurationTest {
                          );
                          assertTrue(
                                  capabilityDiscoveryMode.getClass()
-                                                        .isAssignableFrom(IgnoreListingCapabilityDiscoveryMode.class)
+                                                        .isAssignableFrom(IgnoreListingDiscoveryMode.class)
                          );
                      });
     }

@@ -40,7 +40,7 @@ import java.util.Set;
  * @author Steven van Beelen
  * @since 4.4
  */
-public class IgnoreListingCapabilityDiscoveryMode implements CapabilityDiscoveryMode {
+public class IgnoreListingDiscoveryMode implements CapabilityDiscoveryMode {
 
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -49,11 +49,11 @@ public class IgnoreListingCapabilityDiscoveryMode implements CapabilityDiscovery
     private final Set<ServiceInstance> ignoredServices = new HashSet<>();
 
     /**
-     * Build an {@link IgnoreListingCapabilityDiscoveryMode}, wrapping the given {@code delegate}.
+     * Build an {@link IgnoreListingDiscoveryMode}, wrapping the given {@code delegate}.
      *
      * @param delegate the {@link CapabilityDiscoveryMode} to enhance with ignore listing logic
      */
-    public IgnoreListingCapabilityDiscoveryMode(CapabilityDiscoveryMode delegate) {
+    public IgnoreListingDiscoveryMode(CapabilityDiscoveryMode delegate) {
         this.delegate = delegate;
     }
 

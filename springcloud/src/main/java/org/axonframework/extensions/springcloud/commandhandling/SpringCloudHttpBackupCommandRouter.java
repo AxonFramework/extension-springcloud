@@ -19,7 +19,7 @@ package org.axonframework.extensions.springcloud.commandhandling;
 import org.axonframework.commandhandling.distributed.ConsistentHashChangeListener;
 import org.axonframework.commandhandling.distributed.RoutingStrategy;
 import org.axonframework.common.AxonConfigurationException;
-import org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingCapabilityDiscoveryMode;
+import org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingDiscoveryMode;
 import org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabilityDiscoveryMode;
 import org.axonframework.extensions.springcloud.commandhandling.mode.SerializedMemberCapabilities;
 import org.axonframework.serialization.Serializer;
@@ -232,7 +232,7 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
                                                .restTemplate(restTemplate)
                                                .serializer(serializerSupplier.get())
                                                .build();
-            capabilityDiscoveryMode(new IgnoreListingCapabilityDiscoveryMode(restDiscoveryMode));
+            capabilityDiscoveryMode(new IgnoreListingDiscoveryMode(restDiscoveryMode));
 
             super.validate();
             assertNonNull(restTemplate, "The RestTemplate is a hard requirement and should be provided");

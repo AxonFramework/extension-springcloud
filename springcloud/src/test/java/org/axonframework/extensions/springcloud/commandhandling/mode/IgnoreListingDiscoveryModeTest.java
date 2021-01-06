@@ -11,18 +11,18 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Test class validating the {@link IgnoreListingCapabilityDiscoveryMode}.
+ * Test class validating the {@link IgnoreListingDiscoveryMode}.
  *
  * @author Steven van Beelen
  */
-class IgnoreListingCapabilityDiscoveryModeTest {
+class IgnoreListingDiscoveryModeTest {
 
     private static final int LOAD_FACTOR = 42;
     private static final CommandMessageFilter COMMAND_MESSAGE_FILTER = AcceptAll.INSTANCE;
 
     private final CapabilityDiscoveryMode delegate = mock(CapabilityDiscoveryMode.class);
 
-    private final IgnoreListingCapabilityDiscoveryMode testSubject = new IgnoreListingCapabilityDiscoveryMode(delegate);
+    private final IgnoreListingDiscoveryMode testSubject = new IgnoreListingDiscoveryMode(delegate);
 
     private final ServiceInstance testServiceInstance = mock(ServiceInstance.class);
 

@@ -150,10 +150,10 @@ public class DistributedCommandBusProperties {
 
         /**
          * Defines whether the created {@link org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode}
-         * is wrapped by an {@link org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingCapabilityDiscoveryMode}
-         * implementations. This is enabled by default and should be disabled by setting this flag to to {@code true}.
+         * is wrapped by an {@link org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingDiscoveryMode}
+         * implementations. This is enabled by default.
          */
-        private boolean disableIgnoreListing = false;
+        private boolean enabledIgnoreListing = true;
 
         /**
          * Defines the {@link org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode}
@@ -269,24 +269,24 @@ public class DistributedCommandBusProperties {
 
         /**
          * Defines whether the created {@link org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode}
-         * (defined through the {@link #mode} settings) is wrapped in an {@link org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingCapabilityDiscoveryMode}.
-         * Defaults to {@code false}, meaning ignore listing is enabled
+         * (defined through the {@link #mode} settings) is wrapped in an {@link org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingDiscoveryMode}.
+         * Defaults to {@code true}, meaning ignore listing is enabled.
          *
          * @return a {@code boolean} specifying whether ignore listing has been disabled
          */
-        public boolean shouldDisableIgnoreListing() {
-            return disableIgnoreListing;
+        public boolean shouldEnabledIgnoreListing() {
+            return enabledIgnoreListing;
         }
 
         /**
          * Sets whether the used {@link org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode}
-         * should be wrapped in an {@link org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingCapabilityDiscoveryMode}.
+         * should be wrapped in an {@link org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingDiscoveryMode}.
          *
-         * @param disableIgnoreListing a {@code boolean} defining whether the used {@link org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode}
-         *                             should be wrapped in an {@link org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingCapabilityDiscoveryMode}.
+         * @param enabledIgnoreListing a {@code boolean} defining whether the used {@link org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode}
+         *                             should be wrapped in an {@link org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingDiscoveryMode}
          */
-        public void setDisableIgnoreListing(boolean disableIgnoreListing) {
-            this.disableIgnoreListing = disableIgnoreListing;
+        public void setEnabledIgnoreListing(boolean enabledIgnoreListing) {
+            this.enabledIgnoreListing = enabledIgnoreListing;
         }
 
         public enum Mode {
