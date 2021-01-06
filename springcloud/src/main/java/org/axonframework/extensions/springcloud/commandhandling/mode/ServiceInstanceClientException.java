@@ -19,8 +19,8 @@ package org.axonframework.extensions.springcloud.commandhandling.mode;
 import org.axonframework.common.AxonException;
 
 /**
- * Exception defining a {@link org.springframework.cloud.client.ServiceInstance} threw a client exception when an
- * attempt was made to make an HTTP connection.
+ * Exception defining a {@link org.springframework.cloud.client.ServiceInstance} threw a client side exception when an
+ * attempt was made to retrieve {@link MemberCapabilities}.
  *
  * @author Steven van Beelen
  * @since 4.4
