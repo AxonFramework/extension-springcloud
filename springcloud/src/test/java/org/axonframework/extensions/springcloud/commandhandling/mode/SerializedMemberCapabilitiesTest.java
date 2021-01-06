@@ -75,4 +75,22 @@ class SerializedMemberCapabilitiesTest {
 
         assertThrows(IllegalStateException.class, () -> testSubject.getCommandFilter());
     }
+
+    @Test
+    void testGetSerializedCommandFilter() {
+        SerializedObject<String> expected = serializer.serialize(COMMAND_FILTER, String.class);
+
+        testSubject = new SerializedMemberCapabilities(LOAD_FACTOR, COMMAND_FILTER, serializer);
+
+        assertEquals(expected.getData(), testSubject.getSerializedCommandFilter());
+    }
+
+    @Test
+    void testGetSerializedCommandFilterType() {
+        SerializedObject<String> expected = serializer.serialize(COMMAND_FILTER, String.class);
+
+        testSubject = new SerializedMemberCapabilities(LOAD_FACTOR, COMMAND_FILTER, serializer);
+
+        assertEquals(expected.getType().getName(), testSubject.getSerializedCommandFilterType());
+    }
 }

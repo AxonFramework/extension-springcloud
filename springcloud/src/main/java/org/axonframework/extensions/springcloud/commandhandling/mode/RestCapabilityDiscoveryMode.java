@@ -137,7 +137,7 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
      */
     @GetMapping
     public MemberCapabilities getLocalMemberCapabilities() {
-        return localCapabilities.get();
+        return new SerializedMemberCapabilities(localCapabilities.get(), serializer);
     }
 
     /**

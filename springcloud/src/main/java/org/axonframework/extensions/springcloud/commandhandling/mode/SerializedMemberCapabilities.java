@@ -17,6 +17,7 @@
 package org.axonframework.extensions.springcloud.commandhandling.mode;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.axonframework.commandhandling.distributed.CommandMessageFilter;
 import org.axonframework.serialization.SerializedObject;
@@ -110,6 +111,7 @@ public class SerializedMemberCapabilities implements MemberCapabilities {
     }
 
     @Override
+    @JsonIgnore
     public CommandMessageFilter getCommandFilter() {
         if (serializer == null) {
             throw new IllegalStateException("Cannot retrieve the CommandMessageFilter if no serializer has been set.");
@@ -118,5 +120,25 @@ public class SerializedMemberCapabilities implements MemberCapabilities {
                                                                    String.class,
                                                                    serializedCommandFilterType,
                                                                    null));
+    }
+
+    /**
+     * Returns the serialized format of the {@link CommandMessageFilter} in this {@link MemberCapabilities}. Needed to
+     * allow a {@link org.springframework.web.client.RestTemplate} to serialize this object.
+     *
+     * @return the serialized format of the {@link CommandMessageFilter}
+     */
+    public String getSerializedCommandFilter() {
+        return serializedCommandFilter;
+    }
+
+    /**
+     * Returns the type of the serialized {@link CommandMessageFilter} in this {@link MemberCapabilities}. Needed to
+     * allow a {@link org.springframework.web.client.RestTemplate} to serialize this object.
+     *
+     * @return the type of the serialized {@link CommandMessageFilter} in this {@link MemberCapabilities}
+     */
+    public String getSerializedCommandFilterType() {
+        return serializedCommandFilterType;
     }
 }

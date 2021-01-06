@@ -54,7 +54,11 @@ class RestCapabilityDiscoveryModeTest {
     @Test
     void testGetLocalMemberCapabilitiesReturnsIncapableMemberIfLocalCapabilitiesIsNeverUpdated() {
         MemberCapabilities result = ((RestCapabilityDiscoveryMode) testSubject).getLocalMemberCapabilities();
-        assertEquals(INCAPABLE_MEMBER, result);
+
+        assertTrue(result instanceof SerializedMemberCapabilities);
+        ((SerializedMemberCapabilities) result).setSerializer(serializer);
+        assertEquals(INCAPABLE_MEMBER.getLoadFactor(), result.getLoadFactor());
+        assertEquals(INCAPABLE_MEMBER.getCommandFilter(), result.getCommandFilter());
     }
 
     @Test
@@ -63,6 +67,8 @@ class RestCapabilityDiscoveryModeTest {
 
         MemberCapabilities result = ((RestCapabilityDiscoveryMode) testSubject).getLocalMemberCapabilities();
 
+        assertTrue(result instanceof SerializedMemberCapabilities);
+        ((SerializedMemberCapabilities) result).setSerializer(serializer);
         assertEquals(LOAD_FACTOR, result.getLoadFactor());
         assertEquals(COMMAND_MESSAGE_FILTER, result.getCommandFilter());
     }
