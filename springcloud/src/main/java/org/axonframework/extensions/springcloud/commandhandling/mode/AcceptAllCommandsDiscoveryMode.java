@@ -19,7 +19,6 @@ package org.axonframework.extensions.springcloud.commandhandling.mode;
 import org.axonframework.commandhandling.distributed.CommandMessageFilter;
 import org.axonframework.commandhandling.distributed.commandfilter.AcceptAll;
 import org.axonframework.common.AxonConfigurationException;
-import org.axonframework.serialization.Serializer;
 import org.springframework.cloud.client.ServiceInstance;
 
 import java.util.Optional;
@@ -50,7 +49,6 @@ public class AcceptAllCommandsDiscoveryMode implements CapabilityDiscoveryMode {
     /**
      * Instantiate a {@link Builder} to be able to create a {@link AcceptAllCommandsDiscoveryMode}.
      * <p>
-     * The {@link Serializer} is defaulted to a {@link org.axonframework.serialization.xml.XStreamSerializer} instance
      * The delegate {@link CapabilityDiscoveryMode} is a <b>hard requirement</b> and as such should be provided.
      *
      * @return a {@link Builder} to be able to create a {@link AcceptAllCommandsDiscoveryMode}
@@ -88,7 +86,6 @@ public class AcceptAllCommandsDiscoveryMode implements CapabilityDiscoveryMode {
     /**
      * Builder class to instantiate a {@link AcceptAllCommandsDiscoveryMode}.
      * <p>
-     * The {@link Serializer} is defaulted to a {@link org.axonframework.serialization.xml.XStreamSerializer} instance
      * The delegate {@link CapabilityDiscoveryMode} is a <b>hard requirement</b> and as such should be provided.
      */
     public static class Builder {
