@@ -26,13 +26,13 @@ import org.springframework.web.client.RestTemplate;
 /**
  * Simple implementation of the {@link CapabilityDiscoveryMode}, which will discover {@link
  * org.springframework.cloud.client.ServiceInstance}s and assume they can handle the exact same set of commands as the
- * local instance. This {@code DiscoveryMode} us thus a valid solution in a homogeneous command handling system. As
+ * local instance. This {@code DiscoveryMode} is thus a valid solution in a homogeneous command handling system. As
  * such, this implementation <em>does not</em> take into account the given {@link CommandMessageFilter} upon {@link
  * #updateLocalCapabilities(ServiceInstance, int, CommandMessageFilter)} for example. Instead, it will set the command
  * filter to {@link AcceptAll}. Additionally, it does not employ any notion of deny listing discovered {@link
  * org.springframework.cloud.client.ServiceInstance}s.
  * <p>
- * Note that sharing and discovering a nodes capabilities is done based on the {@link RestCapabilityDiscoveryMode}
+ * Note that sharing and discovering a node's capabilities is done based on the {@link RestCapabilityDiscoveryMode}
  * implementation.
  *
  * @author Steven van Beelen
@@ -46,8 +46,6 @@ public class SimpleCapabilityDiscoveryMode extends RestCapabilityDiscoveryMode {
      * The {@link Serializer} is defaulted to a {@link org.axonframework.serialization.xml.XStreamSerializer} instance
      * and the {@code messageCapabilitiesEndpoint} to {@code "/message-routing-information"}. The {@link RestTemplate}
      * is a <b>hard requirement</b> and as such should be provided.
-     * <p>
-     * Note that {@link Builder#disableIgnoreListing()} is invoked by default.
      *
      * @return a {@link Builder} to be able to create a {@link SimpleCapabilityDiscoveryMode}
      */
@@ -60,8 +58,6 @@ public class SimpleCapabilityDiscoveryMode extends RestCapabilityDiscoveryMode {
      * <p>
      * Will assert that the {@link RestTemplate} is not {@code null} and will throw an {@link
      * AxonConfigurationException} if this is the case.
-     * <p>
-     * Note that {@link Builder#disableIgnoreListing()} is invoked by default.
      *
      * @param builder the {@link Builder} used to instantiate a {@link SimpleCapabilityDiscoveryMode} instance
      */
@@ -82,20 +78,12 @@ public class SimpleCapabilityDiscoveryMode extends RestCapabilityDiscoveryMode {
      * The {@link Serializer} is defaulted to a {@link org.axonframework.serialization.xml.XStreamSerializer} instance,
      * the {@code messageCapabilitiesEndpoint} to {@code "/message-routing-information"}, and ignore listing is enabled.
      * The {@link RestTemplate} is a <b>hard requirement</b> and as such should be provided.
-     * <p>
-     * Note that {@link Builder#disableIgnoreListing()} is invoked by default.
      */
     public static class Builder extends RestCapabilityDiscoveryMode.Builder {
 
         @Override
         public Builder serializer(Serializer serializer) {
             super.serializer(serializer);
-            return this;
-        }
-
-        @Override
-        public Builder disableIgnoreListing() {
-            super.disableIgnoreListing();
             return this;
         }
 
@@ -112,8 +100,7 @@ public class SimpleCapabilityDiscoveryMode extends RestCapabilityDiscoveryMode {
         }
 
         @Override
-        protected SimpleCapabilityDiscoveryMode buildInstance() {
-            disableIgnoreListing();
+        public SimpleCapabilityDiscoveryMode build() {
             return new SimpleCapabilityDiscoveryMode(this);
         }
     }

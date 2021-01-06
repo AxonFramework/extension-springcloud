@@ -158,12 +158,6 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
             return this;
         }
 
-        @Override
-        public Builder disableIgnoreListing() {
-            super.disableIgnoreListing();
-            return this;
-        }
-
         /**
          * Sets the {@link RestTemplate} used to request remote {@link Member}s their {@link MemberCapabilities} with.
          *
@@ -193,7 +187,7 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
         }
 
         @Override
-        protected RestCapabilityDiscoveryMode buildInstance() {
+        public RestCapabilityDiscoveryMode build() {
             return new RestCapabilityDiscoveryMode(this);
         }
 

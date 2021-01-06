@@ -26,6 +26,7 @@ import org.axonframework.extensions.springcloud.DistributedCommandBusProperties;
 import org.axonframework.extensions.springcloud.commandhandling.SpringCloudCommandRouter;
 import org.axonframework.extensions.springcloud.commandhandling.SpringHttpCommandBusConnector;
 import org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode;
+import org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingCapabilityDiscoveryMode;
 import org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabilityDiscoveryMode;
 import org.axonframework.extensions.springcloud.commandhandling.mode.SimpleCapabilityDiscoveryMode;
 import org.axonframework.serialization.Serializer;
@@ -102,16 +103,13 @@ public class SpringCloudAutoConfiguration {
         }
     }
 
-    private CapabilityDiscoveryMode buildRestCapabilityDiscoveryMode(RestCapabilityDiscoveryMode.Builder builder,
-                                                                     Serializer serializer,
-                                                                     RestTemplate restTemplate) {
-        builder.serializer(serializer)
-               .restTemplate(restTemplate)
-               .messageCapabilitiesEndpoint(springCloudProperties.getRestModeUrl());
-        if (springCloudProperties.shouldDisableIgnoreListing()) {
-            builder.disableIgnoreListing();
-        }
-        return builder.build();
+    private RestCapabilityDiscoveryMode buildRestCapabilityDiscoveryMode(RestCapabilityDiscoveryMode.Builder builder,
+                                                                         Serializer serializer,
+                                                                         RestTemplate restTemplate) {
+        return builder.serializer(serializer)
+                      .restTemplate(restTemplate)
+                      .messageCapabilitiesEndpoint(springCloudProperties.getRestModeUrl())
+                      .build();
     }
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
@@ -123,13 +121,22 @@ public class SpringCloudAutoConfiguration {
                                                   RoutingStrategy routingStrategy,
                                                   CapabilityDiscoveryMode capabilityDiscoveryMode,
                                                   Serializer serializer) {
-        return SpringCloudCommandRouter.builder()
-                                       .discoveryClient(discoveryClient)
-                                       .localServiceInstance(localServiceInstance)
-                                       .routingStrategy(routingStrategy)
-                                       .capabilityDiscoveryMode(capabilityDiscoveryMode)
-                                       .serializer(serializer)
-                                       .build();
+        SpringCloudCommandRouter.Builder routerBuilder = SpringCloudCommandRouter.builder();
+        if (shouldEnableIgnoreListing(capabilityDiscoveryMode.getClass())) {
+            routerBuilder.capabilityDiscoveryMode(new IgnoreListingCapabilityDiscoveryMode(capabilityDiscoveryMode));
+        } else {
+            routerBuilder.capabilityDiscoveryMode(capabilityDiscoveryMode);
+        }
+        return routerBuilder.discoveryClient(discoveryClient)
+                            .localServiceInstance(localServiceInstance)
+                            .routingStrategy(routingStrategy)
+                            .serializer(serializer)
+                            .build();
+    }
+
+    private boolean shouldEnableIgnoreListing(Class<? extends CapabilityDiscoveryMode> discoveryModeClass) {
+        return !discoveryModeClass.isAssignableFrom(IgnoreListingCapabilityDiscoveryMode.class)
+                && !springCloudProperties.shouldDisableIgnoreListing();
     }
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")

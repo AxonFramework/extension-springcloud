@@ -4,7 +4,6 @@ import org.axonframework.commandhandling.distributed.CommandMessageFilter;
 import org.axonframework.commandhandling.distributed.commandfilter.CommandNameFilter;
 import org.axonframework.extensions.springcloud.commandhandling.utils.TestSerializer;
 import org.axonframework.serialization.Serializer;
-import org.axonframework.serialization.xml.XStreamSerializer;
 import org.junit.jupiter.api.*;
 import org.mockito.*;
 import org.springframework.cloud.client.ServiceInstance;
@@ -46,7 +45,6 @@ class RestCapabilityDiscoveryModeTest {
         testSubject = RestCapabilityDiscoveryMode.builder()
                                                  .serializer(serializer)
                                                  .restTemplate(restTemplate)
-                                                 .disableIgnoreListing()
                                                  .messageCapabilitiesEndpoint(CUSTOM_ENDPOINT)
                                                  .build();
     }

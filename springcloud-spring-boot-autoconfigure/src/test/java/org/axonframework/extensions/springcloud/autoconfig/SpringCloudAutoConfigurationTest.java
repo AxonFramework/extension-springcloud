@@ -38,6 +38,7 @@ import org.axonframework.commandhandling.distributed.CommandBusConnector;
 import org.axonframework.commandhandling.distributed.CommandRouter;
 import org.axonframework.commandhandling.distributed.DistributedCommandBus;
 import org.axonframework.commandhandling.distributed.RoutingStrategy;
+import org.axonframework.common.ReflectionUtils;
 import org.axonframework.extensions.springcloud.commandhandling.SpringCloudCommandRouter;
 import org.axonframework.extensions.springcloud.commandhandling.SpringHttpCommandBusConnector;
 import org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode;
@@ -69,7 +70,6 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Test class validating the {@link SpringCloudAutoConfiguration}.
@@ -120,7 +120,7 @@ class SpringCloudAutoConfigurationTest {
                          assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
                                             .hasSize(1);
                          assertThat(context).getBean(CapabilityDiscoveryMode.class)
-                                            .isExactlyInstanceOf(IgnoreListingCapabilityDiscoveryMode.class);
+                                            .isExactlyInstanceOf(RestCapabilityDiscoveryMode.class);
 
                          assertThat(context).getBeanNames(CommandRouter.class)
                                             .hasSize(1);
@@ -141,6 +141,16 @@ class SpringCloudAutoConfigurationTest {
                          CommandBus distributedCommandBus = commandBuses.get("distributedCommandBus");
                          assertEquals(DistributedCommandBus.class, distributedCommandBus.getClass());
                          assertNotEquals(localSegment, distributedCommandBus);
+                         SpringCloudCommandRouter springCloudCommandRouter =
+                                 context.getBean("springCloudCommandRouter", SpringCloudCommandRouter.class);
+                         CapabilityDiscoveryMode capabilityDiscoveryMode = ReflectionUtils.getFieldValue(
+                                 SpringCloudCommandRouter.class.getDeclaredField("capabilityDiscoveryMode"),
+                                 springCloudCommandRouter
+                         );
+                         assertTrue(
+                                 capabilityDiscoveryMode.getClass()
+                                                        .isAssignableFrom(IgnoreListingCapabilityDiscoveryMode.class)
+                         );
                      });
     }
 
