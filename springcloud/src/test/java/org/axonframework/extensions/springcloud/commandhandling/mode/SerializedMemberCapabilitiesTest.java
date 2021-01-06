@@ -19,78 +19,18 @@ class SerializedMemberCapabilitiesTest {
     private static final int LOAD_FACTOR = 100;
     private static final CommandMessageFilter COMMAND_FILTER = AcceptAll.INSTANCE;
 
-    private SerializedMemberCapabilities testSubject;
-
     private final Serializer serializer = JacksonSerializer.defaultSerializer();
 
     @Test
     void testBuildSerializedMemberCapabilitiesThroughDelegate() {
+        SerializedObject<String> testSerializedFilter = serializer.serialize(COMMAND_FILTER, String.class);
+
         MemberCapabilities delegate = new DefaultMemberCapabilities(LOAD_FACTOR, COMMAND_FILTER);
 
-        testSubject = new SerializedMemberCapabilities(delegate, serializer);
-        testSubject.setSerializer(serializer);
+        SerializedMemberCapabilities testSubject = SerializedMemberCapabilities.build(delegate, serializer);
 
         assertEquals(LOAD_FACTOR, testSubject.getLoadFactor());
-        assertEquals(COMMAND_FILTER, testSubject.getCommandFilter());
-    }
-
-    @Test
-    void testBuildSerializedMemberCapabilitiesThroughFactorAndFilter() {
-        testSubject = new SerializedMemberCapabilities(LOAD_FACTOR, COMMAND_FILTER, serializer);
-        testSubject.setSerializer(serializer);
-
-        assertEquals(LOAD_FACTOR, testSubject.getLoadFactor());
-        assertEquals(COMMAND_FILTER, testSubject.getCommandFilter());
-    }
-
-    @Test
-    void testBuildSerializedMemberCapabilitiesThroughFactorAndSerializedFilterObject() {
-        SerializedObject<String> serializedFilter = serializer.serialize(COMMAND_FILTER, String.class);
-
-        testSubject = new SerializedMemberCapabilities(LOAD_FACTOR, serializedFilter);
-        testSubject.setSerializer(serializer);
-
-        assertEquals(LOAD_FACTOR, testSubject.getLoadFactor());
-        assertEquals(COMMAND_FILTER, testSubject.getCommandFilter());
-    }
-
-    @Test
-    void testBuildSerializedMemberCapabilitiesThroughFactorAndSerializedFilter() {
-        SerializedObject<String> serializedFilter = serializer.serialize(COMMAND_FILTER, String.class);
-
-        testSubject = new SerializedMemberCapabilities(
-                LOAD_FACTOR, serializedFilter.getData(), serializedFilter.getType().getName()
-        );
-        testSubject.setSerializer(serializer);
-
-        assertEquals(LOAD_FACTOR, testSubject.getLoadFactor());
-        assertEquals(COMMAND_FILTER, testSubject.getCommandFilter());
-    }
-
-    @Test
-    void testGetCommandFilterThrowsIllegalStateExceptionIfNoSerializerIsPresent() {
-        MemberCapabilities delegate = new DefaultMemberCapabilities(LOAD_FACTOR, COMMAND_FILTER);
-
-        testSubject = new SerializedMemberCapabilities(delegate, serializer);
-
-        assertThrows(IllegalStateException.class, () -> testSubject.getCommandFilter());
-    }
-
-    @Test
-    void testGetSerializedCommandFilter() {
-        SerializedObject<String> expected = serializer.serialize(COMMAND_FILTER, String.class);
-
-        testSubject = new SerializedMemberCapabilities(LOAD_FACTOR, COMMAND_FILTER, serializer);
-
-        assertEquals(expected.getData(), testSubject.getSerializedCommandFilter());
-    }
-
-    @Test
-    void testGetSerializedCommandFilterType() {
-        SerializedObject<String> expected = serializer.serialize(COMMAND_FILTER, String.class);
-
-        testSubject = new SerializedMemberCapabilities(LOAD_FACTOR, COMMAND_FILTER, serializer);
-
-        assertEquals(expected.getType().getName(), testSubject.getSerializedCommandFilterType());
+        assertEquals(testSerializedFilter.getData(), testSubject.getSerializedCommandFilter());
+        assertEquals(testSerializedFilter.getType().getName(), testSubject.getSerializedCommandFilterType());
     }
 }

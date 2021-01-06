@@ -18,6 +18,8 @@ package org.axonframework.extensions.springcloud.commandhandling.mode;
 
 import org.axonframework.commandhandling.distributed.CommandMessageFilter;
 import org.axonframework.commandhandling.distributed.commandfilter.DenyAll;
+import org.axonframework.serialization.Serializer;
+import org.axonframework.serialization.SimpleSerializedObject;
 
 /**
  * Default implementation of the {@link MemberCapabilities}, storing the {@code loadFactor} and {@link
@@ -48,6 +50,26 @@ public class DefaultMemberCapabilities implements MemberCapabilities {
     public DefaultMemberCapabilities(int loadFactor, CommandMessageFilter commandFilter) {
         this.loadFactor = loadFactor;
         this.commandFilter = commandFilter;
+    }
+
+    /**
+     * Build a {@link DefaultMemberCapabilities} based on the given {@code serializedCapabilities}, deserializing the
+     * {@link CommandMessageFilter} with the given {@code serializer}.
+     *
+     * @param serializedCapabilities the {@link SerializedMemberCapabilities} to base this {@link
+     *                               DefaultMemberCapabilities} instance on
+     * @param serializer             the {@link Serializer} to deserialize the {@link CommandMessageFilter} with for the
+     *                               {@link MemberCapabilities#getCommandFilter()} method
+     */
+    public DefaultMemberCapabilities(SerializedMemberCapabilities serializedCapabilities,
+                                     Serializer serializer) {
+        this.loadFactor = serializedCapabilities.getLoadFactor();
+        this.commandFilter = serializer.deserialize(new SimpleSerializedObject<>(
+                serializedCapabilities.getSerializedCommandFilter(),
+                String.class,
+                serializedCapabilities.getSerializedCommandFilterType(),
+                null
+        ));
     }
 
     @Override

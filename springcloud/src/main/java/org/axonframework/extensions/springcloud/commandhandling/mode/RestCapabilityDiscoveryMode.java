@@ -116,8 +116,7 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
                 destinationUri, HttpMethod.GET, HttpEntity.EMPTY, SerializedMemberCapabilities.class
         ).getBody();
         //noinspection ConstantConditions
-        serializedMemberCapabilities.setSerializer(serializer);
-        return serializedMemberCapabilities;
+        return new DefaultMemberCapabilities(serializedMemberCapabilities, serializer);
     }
 
     private boolean isLocalServiceInstance(ServiceInstance serviceInstance) {
@@ -126,18 +125,19 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
     }
 
     /**
-     * Get the local membership information as a {@link MemberCapabilities}, thus the {@code MemberCapabilities} of the
-     * node this {@link CapabilityDiscoveryMode} is a part of. The local membership information is set and updated
-     * through the {@link #updateLocalCapabilities(ServiceInstance, int, CommandMessageFilter)} method.
+     * Get the local membership information as a {@link SerializedMemberCapabilities}, thus the {@link
+     * MemberCapabilities} of the node this {@link CapabilityDiscoveryMode} is a part of. The local membership
+     * information is set and updated through the {@link #updateLocalCapabilities(ServiceInstance, int,
+     * CommandMessageFilter)} method.
      * <p>
      * Can either be called directly or through a GET operation on the specified {@code
      * messageRoutingInformationEndpoint} of this node.
      *
-     * @return the {@link MemberCapabilities} if the node this CommandRouter implementation is part of
+     * @return the {@link SerializedMemberCapabilities} if the node this CommandRouter implementation is part of
      */
     @GetMapping
-    public MemberCapabilities getLocalMemberCapabilities() {
-        return new SerializedMemberCapabilities(localCapabilities.get(), serializer);
+    public SerializedMemberCapabilities getLocalMemberCapabilities() {
+        return SerializedMemberCapabilities.build(localCapabilities.get(), serializer);
     }
 
     /**

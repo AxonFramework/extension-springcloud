@@ -2,6 +2,8 @@ package org.axonframework.extensions.springcloud.commandhandling.mode;
 
 import org.axonframework.commandhandling.distributed.CommandMessageFilter;
 import org.axonframework.commandhandling.distributed.commandfilter.AcceptAll;
+import org.axonframework.serialization.Serializer;
+import org.axonframework.serialization.json.JacksonSerializer;
 import org.junit.jupiter.api.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -18,6 +20,8 @@ class DefaultMemberCapabilitiesTest {
 
     private DefaultMemberCapabilities testSubject;
 
+    private final Serializer serializer = JacksonSerializer.defaultSerializer();
+
     @BeforeEach
     void setUp() {
         testSubject = new DefaultMemberCapabilities(LOAD_FACTOR, COMMAND_FILTER);
@@ -31,5 +35,17 @@ class DefaultMemberCapabilitiesTest {
     @Test
     void testCommandMessageFilter() {
         assertEquals(COMMAND_FILTER, testSubject.getCommandFilter());
+    }
+
+    @Test
+    void testConstructDefaultMemberCapabilitiesThroughDelegateAndSerializer() {
+        SerializedMemberCapabilities testSerializedCapabilities =
+                SerializedMemberCapabilities.build(testSubject, serializer);
+
+        MemberCapabilities deserializedTestSubject =
+                new DefaultMemberCapabilities(testSerializedCapabilities, serializer);
+
+        assertEquals(LOAD_FACTOR, deserializedTestSubject.getLoadFactor());
+        assertEquals(COMMAND_FILTER, deserializedTestSubject.getCommandFilter());
     }
 }

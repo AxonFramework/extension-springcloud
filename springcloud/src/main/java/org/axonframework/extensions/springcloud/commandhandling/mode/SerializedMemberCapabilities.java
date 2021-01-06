@@ -17,65 +17,42 @@
 package org.axonframework.extensions.springcloud.commandhandling.mode;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.axonframework.commandhandling.distributed.CommandMessageFilter;
 import org.axonframework.serialization.SerializedObject;
 import org.axonframework.serialization.Serializer;
-import org.axonframework.serialization.SimpleSerializedObject;
 
 import java.beans.ConstructorProperties;
 
 /**
- * Implementation of the {@link MemberCapabilities} which stores the {@link CommandMessageFilter} in a serialized
- * format.
+ * Holder of the {@code loadFactor} and the serialized {@link CommandMessageFilter} of a specific member. Allows for
+ * easier data transfer. Both the {@code loadFactor} and {@code CommandMessageFilter} are used to recreate a {@link
+ * MemberCapabilities} object. The serialized {@code CommandMessageFilter} is kept as a {@link String} of the contents
+ * and a {@code String} defining the class type.
  *
  * @author Steven van Beelen
  * @since 4.4
  */
-public class SerializedMemberCapabilities implements MemberCapabilities {
-
-    private static final long serialVersionUID = -6885816999650990713L;
+public class SerializedMemberCapabilities {
 
     private final int loadFactor;
     private final String serializedCommandFilter;
     private final String serializedCommandFilterType;
-    private transient Serializer serializer;
 
     /**
-     * Construct a {@link SerializedMemberCapabilities} based on the given {@code delegate}, serializing the {@link
-     * CommandMessageFilter} with the given {@code serializer}
+     * Build a {@link SerializedMemberCapabilities} based on the given {@code delegate}, serializing the {@link
+     * CommandMessageFilter} with the given {@code serializer}.
      *
      * @param delegate   the delegate {@link MemberCapabilities} to base this {@link SerializedMemberCapabilities}
      *                   instance on
      * @param serializer the {@link Serializer} to serialize the {@link MemberCapabilities#getCommandFilter()} with
      */
-    protected SerializedMemberCapabilities(MemberCapabilities delegate, Serializer serializer) {
-        this(delegate.getLoadFactor(), delegate.getCommandFilter(), serializer);
-    }
-
-    /**
-     * Construct a {@link SerializedMemberCapabilities} based on the given {@code loadFactor} and {@code commandFilter}.
-     * The {@code commandFilter} will be serialized through the {@code serializer}.
-     *
-     * @param loadFactor    the load factor for a given member
-     * @param commandFilter the {@link CommandMessageFilter} for a given member
-     * @param serializer    the {@link Serializer} to serialize the {@code commandFilter} with
-     */
-    protected SerializedMemberCapabilities(int loadFactor, CommandMessageFilter commandFilter, Serializer serializer) {
-        this(loadFactor, serializer.serialize(commandFilter, String.class));
-    }
-
-    /**
-     * Construct a {@link SerializedMemberCapabilities} out of the given {@code loadFactor} and the serialized {@link
-     * CommandMessageFilter}
-     *
-     * @param loadFactor              the load factor for a given member
-     * @param serializedCommandFilter a {@link SerializedObject} of type {@link String} containing a serialized {@link
-     *                                CommandMessageFilter} for a given member
-     */
-    protected SerializedMemberCapabilities(int loadFactor, SerializedObject<String> serializedCommandFilter) {
-        this(loadFactor, serializedCommandFilter.getData(), serializedCommandFilter.getType().getName());
+    public static SerializedMemberCapabilities build(MemberCapabilities delegate, Serializer serializer) {
+        SerializedObject<String> serializedCommandFilter =
+                serializer.serialize(delegate.getCommandFilter(), String.class);
+        return new SerializedMemberCapabilities(delegate.getLoadFactor(),
+                                                serializedCommandFilter.getData(),
+                                                serializedCommandFilter.getType().getName());
     }
 
     /**
@@ -97,46 +74,27 @@ public class SerializedMemberCapabilities implements MemberCapabilities {
     }
 
     /**
-     * Sets the {@link Serializer} used to deserialize the serialized {@link CommandMessageFilter}.
+     * Returns the load factor of a member.
      *
-     * @param serializer the {@link Serializer} used to deserialize the serialized {@link CommandMessageFilter}
+     * @return the load factor of a member
      */
-    public void setSerializer(Serializer serializer) {
-        this.serializer = serializer;
-    }
-
-    @Override
     public int getLoadFactor() {
         return loadFactor;
     }
 
-    @Override
-    @JsonIgnore
-    public CommandMessageFilter getCommandFilter() {
-        if (serializer == null) {
-            throw new IllegalStateException("Cannot retrieve the CommandMessageFilter if no serializer has been set.");
-        }
-        return serializer.deserialize(new SimpleSerializedObject<>(serializedCommandFilter,
-                                                                   String.class,
-                                                                   serializedCommandFilterType,
-                                                                   null));
-    }
-
     /**
-     * Returns the serialized format of the {@link CommandMessageFilter} in this {@link MemberCapabilities}. Needed to
-     * allow a {@link org.springframework.web.client.RestTemplate} to serialize this object.
+     * Returns the serialized format of a {@link CommandMessageFilter} for a member.
      *
-     * @return the serialized format of the {@link CommandMessageFilter}
+     * @return the serialized format of a {@link CommandMessageFilter} for a member
      */
     public String getSerializedCommandFilter() {
         return serializedCommandFilter;
     }
 
     /**
-     * Returns the type of the serialized {@link CommandMessageFilter} in this {@link MemberCapabilities}. Needed to
-     * allow a {@link org.springframework.web.client.RestTemplate} to serialize this object.
+     * Returns the type of a serialized {@link CommandMessageFilter} for a member.
      *
-     * @return the type of the serialized {@link CommandMessageFilter} in this {@link MemberCapabilities}
+     * @return the type of a serialized {@link CommandMessageFilter} for a member
      */
     public String getSerializedCommandFilterType() {
         return serializedCommandFilterType;

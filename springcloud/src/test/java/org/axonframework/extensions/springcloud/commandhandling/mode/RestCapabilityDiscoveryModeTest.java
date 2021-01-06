@@ -51,24 +51,24 @@ class RestCapabilityDiscoveryModeTest {
 
     @Test
     void testGetLocalMemberCapabilitiesReturnsIncapableMemberIfLocalCapabilitiesIsNeverUpdated() {
-        MemberCapabilities result = ((RestCapabilityDiscoveryMode) testSubject).getLocalMemberCapabilities();
+        SerializedMemberCapabilities result = ((RestCapabilityDiscoveryMode) testSubject).getLocalMemberCapabilities();
 
-        assertTrue(result instanceof SerializedMemberCapabilities);
-        ((SerializedMemberCapabilities) result).setSerializer(serializer);
-        assertEquals(INCAPABLE_MEMBER.getLoadFactor(), result.getLoadFactor());
-        assertEquals(INCAPABLE_MEMBER.getCommandFilter(), result.getCommandFilter());
+        DefaultMemberCapabilities deserializableResult =
+                new DefaultMemberCapabilities(result, serializer);
+        assertEquals(INCAPABLE_MEMBER.getLoadFactor(), deserializableResult.getLoadFactor());
+        assertEquals(INCAPABLE_MEMBER.getCommandFilter(), deserializableResult.getCommandFilter());
     }
 
     @Test
     void testGetLocalMemberCapabilitiesReturnsUpdatedLocalCapabilities() {
         testSubject.updateLocalCapabilities(localInstance, LOAD_FACTOR, COMMAND_MESSAGE_FILTER);
 
-        MemberCapabilities result = ((RestCapabilityDiscoveryMode) testSubject).getLocalMemberCapabilities();
+        SerializedMemberCapabilities result = ((RestCapabilityDiscoveryMode) testSubject).getLocalMemberCapabilities();
 
-        assertTrue(result instanceof SerializedMemberCapabilities);
-        ((SerializedMemberCapabilities) result).setSerializer(serializer);
-        assertEquals(LOAD_FACTOR, result.getLoadFactor());
-        assertEquals(COMMAND_MESSAGE_FILTER, result.getCommandFilter());
+        DefaultMemberCapabilities deserializableResult =
+                new DefaultMemberCapabilities(result, serializer);
+        assertEquals(LOAD_FACTOR, deserializableResult.getLoadFactor());
+        assertEquals(COMMAND_MESSAGE_FILTER, deserializableResult.getCommandFilter());
     }
 
     @Test
@@ -105,6 +105,7 @@ class RestCapabilityDiscoveryModeTest {
 
     @Test
     void testCapabilitiesGetsCapabilitiesThroughRestTemplate() {
+        MemberCapabilities expectedCapabilities = new DefaultMemberCapabilities(LOAD_FACTOR, COMMAND_MESSAGE_FILTER);
         testSubject.updateLocalCapabilities(localInstance, LOAD_FACTOR, COMMAND_MESSAGE_FILTER);
 
         URI testURI = URI.create("http://remote");
@@ -114,7 +115,7 @@ class RestCapabilityDiscoveryModeTest {
         //noinspection unchecked
         ResponseEntity<SerializedMemberCapabilities> testResponseEntity = mock(ResponseEntity.class);
         when(testResponseEntity.getBody()).thenReturn(
-                new SerializedMemberCapabilities(LOAD_FACTOR, COMMAND_MESSAGE_FILTER, serializer)
+                SerializedMemberCapabilities.build(expectedCapabilities, serializer)
         );
 
         URI expectedRemoteUri = UriComponentsBuilder.fromUri(testURI)
