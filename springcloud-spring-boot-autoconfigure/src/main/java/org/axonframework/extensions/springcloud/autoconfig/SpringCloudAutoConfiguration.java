@@ -83,7 +83,6 @@ public class SpringCloudAutoConfiguration {
         return new RestTemplate();
     }
 
-    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Bean
     @ConditionalOnMissingBean
     public CapabilityDiscoveryMode capabilityDiscoveryMode(Serializer serializer, RestTemplate restTemplate) {

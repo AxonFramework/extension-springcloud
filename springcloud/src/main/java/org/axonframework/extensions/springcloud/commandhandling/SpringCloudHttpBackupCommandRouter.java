@@ -205,13 +205,6 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
 
         @Override
         protected void validate() {
-            super.validate();
-            assertNonNull(restTemplate, "The RestTemplate is a hard requirement and should be provided");
-            assertNonEmpty(
-                    messageRoutingInformationEndpoint,
-                    "The messageRoutingInformationEndpoint is a hard requirement and should be provided"
-            );
-
             // Enforce usage of the RestCapabilityDiscoveryMode by setting it regardless of the provided CapabilityDiscoveryMode
             capabilityDiscoveryMode(
                     RestCapabilityDiscoveryMode.builder()
@@ -219,6 +212,13 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
                                                .restTemplate(restTemplate)
                                                .serializer(serializerSupplier.get())
                                                .build()
+            );
+
+            super.validate();
+            assertNonNull(restTemplate, "The RestTemplate is a hard requirement and should be provided");
+            assertNonEmpty(
+                    messageRoutingInformationEndpoint,
+                    "The messageRoutingInformationEndpoint is a hard requirement and should be provided"
             );
         }
     }

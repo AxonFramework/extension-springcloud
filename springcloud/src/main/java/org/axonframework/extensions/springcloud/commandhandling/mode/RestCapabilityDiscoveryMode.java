@@ -52,7 +52,7 @@ import static org.axonframework.common.BuilderUtils.assertNonNull;
  * @since 4.4
  */
 @RestController
-@RequestMapping("${axon.distributed.spring-cloud.fallback-url:/message-routing-information}")
+@RequestMapping("${axon.distributed.spring-cloud.rest-mode-url:/message-routing-information}")
 public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode<RestCapabilityDiscoveryMode> {
 
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());

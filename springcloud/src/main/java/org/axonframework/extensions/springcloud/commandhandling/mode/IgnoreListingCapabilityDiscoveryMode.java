@@ -77,7 +77,7 @@ public class IgnoreListingCapabilityDiscoveryMode implements CapabilityDiscovery
             ignoredServices.add(serviceInstance);
             logger.info("Added ServiceInstance [{}] under host [{}] and port [{}] to the denied list, "
                                 + "since we could not retrieve the required member capabilities from it.",
-                        serviceInstance.getServiceId(), serviceInstance.getHost(), serviceInstance.getPort());
+                        serviceInstance.getServiceId(), serviceInstance.getHost(), serviceInstance.getPort(), e);
             return Optional.empty();
         }
     }
