@@ -21,14 +21,13 @@ import org.axonframework.commandhandling.distributed.CommandBusConnector;
 import org.axonframework.commandhandling.distributed.CommandRouter;
 import org.axonframework.commandhandling.distributed.DistributedCommandBus;
 import org.axonframework.commandhandling.distributed.RoutingStrategy;
-import org.axonframework.common.AxonConfigurationException;
 import org.axonframework.extensions.springcloud.DistributedCommandBusProperties;
 import org.axonframework.extensions.springcloud.commandhandling.SpringCloudCommandRouter;
 import org.axonframework.extensions.springcloud.commandhandling.SpringHttpCommandBusConnector;
+import org.axonframework.extensions.springcloud.commandhandling.mode.AcceptAllCommandsDiscoveryMode;
 import org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode;
-import org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingCapabilityDiscoveryMode;
+import org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingDiscoveryMode;
 import org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabilityDiscoveryMode;
-import org.axonframework.extensions.springcloud.commandhandling.mode.SimpleCapabilityDiscoveryMode;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.springboot.autoconfig.InfraConfiguration;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -86,30 +85,29 @@ public class SpringCloudAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    public CapabilityDiscoveryMode capabilityDiscoveryMode(Serializer serializer, RestTemplate restTemplate) {
-        switch (springCloudProperties.getMode()) {
-            case REST:
-                return buildRestCapabilityDiscoveryMode(
-                        RestCapabilityDiscoveryMode.builder(), serializer, restTemplate
-                );
-            case SIMPLE:
-                return buildRestCapabilityDiscoveryMode(
-                        SimpleCapabilityDiscoveryMode.builder(), serializer, restTemplate
-                );
-            default:
-                throw new AxonConfigurationException(
-                        "The configured mode [" + springCloudProperties.getMode() + "] is not supported"
-                );
-        }
+    @ConditionalOnProperty(value = "axon.distributed.spring-cloud.mode", havingValue = "REST")
+    public RestCapabilityDiscoveryMode restCapabilityDiscoveryMode(Serializer serializer, RestTemplate restTemplate) {
+        return RestCapabilityDiscoveryMode.builder()
+                                          .serializer(serializer)
+                                          .restTemplate(restTemplate)
+                                          .messageCapabilitiesEndpoint(springCloudProperties.getRestModeUrl())
+                                          .build();
     }
 
-    private RestCapabilityDiscoveryMode buildRestCapabilityDiscoveryMode(RestCapabilityDiscoveryMode.Builder builder,
-                                                                         Serializer serializer,
-                                                                         RestTemplate restTemplate) {
-        return builder.serializer(serializer)
-                      .restTemplate(restTemplate)
-                      .messageCapabilitiesEndpoint(springCloudProperties.getRestModeUrl())
-                      .build();
+    @Primary
+    @Bean("capabilityDiscoveryMode")
+    @ConditionalOnBean(CapabilityDiscoveryMode.class)
+    public CapabilityDiscoveryMode decorateCapabilityDiscoveryMode(CapabilityDiscoveryMode capabilityDiscoveryMode) {
+        CapabilityDiscoveryMode decoratedDiscoveryMode = capabilityDiscoveryMode;
+        if (springCloudProperties.shouldEnableAcceptAllCommands()) {
+            decoratedDiscoveryMode = AcceptAllCommandsDiscoveryMode.builder()
+                                                                   .delegate(decoratedDiscoveryMode)
+                                                                   .build();
+        }
+        if (springCloudProperties.shouldEnabledIgnoreListing()) {
+            decoratedDiscoveryMode = new IgnoreListingDiscoveryMode(decoratedDiscoveryMode);
+        }
+        return decoratedDiscoveryMode;
     }
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
@@ -121,22 +119,13 @@ public class SpringCloudAutoConfiguration {
                                                   RoutingStrategy routingStrategy,
                                                   CapabilityDiscoveryMode capabilityDiscoveryMode,
                                                   Serializer serializer) {
-        SpringCloudCommandRouter.Builder routerBuilder = SpringCloudCommandRouter.builder();
-        if (shouldEnableIgnoreListing(capabilityDiscoveryMode.getClass())) {
-            routerBuilder.capabilityDiscoveryMode(new IgnoreListingCapabilityDiscoveryMode(capabilityDiscoveryMode));
-        } else {
-            routerBuilder.capabilityDiscoveryMode(capabilityDiscoveryMode);
-        }
-        return routerBuilder.discoveryClient(discoveryClient)
-                            .localServiceInstance(localServiceInstance)
-                            .routingStrategy(routingStrategy)
-                            .serializer(serializer)
-                            .build();
-    }
-
-    private boolean shouldEnableIgnoreListing(Class<? extends CapabilityDiscoveryMode> discoveryModeClass) {
-        return !discoveryModeClass.isAssignableFrom(IgnoreListingCapabilityDiscoveryMode.class)
-                && !springCloudProperties.shouldDisableIgnoreListing();
+        return SpringCloudCommandRouter.builder()
+                                       .discoveryClient(discoveryClient)
+                                       .localServiceInstance(localServiceInstance)
+                                       .routingStrategy(routingStrategy)
+                                       .capabilityDiscoveryMode(capabilityDiscoveryMode)
+                                       .serializer(serializer)
+                                       .build();
     }
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")

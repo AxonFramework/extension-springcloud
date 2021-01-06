@@ -44,7 +44,7 @@ import org.axonframework.extensions.springcloud.commandhandling.SpringHttpComman
 import org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode;
 import org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingDiscoveryMode;
 import org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabilityDiscoveryMode;
-import org.axonframework.extensions.springcloud.commandhandling.mode.SimpleCapabilityDiscoveryMode;
+import org.axonframework.extensions.springcloud.commandhandling.mode.AcceptAllCommandsDiscoveryMode;
 import org.axonframework.springboot.autoconfig.AxonServerAutoConfiguration;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
@@ -177,7 +177,7 @@ class SpringCloudAutoConfigurationTest {
             assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
                                .hasSize(1);
             assertThat(context).getBean(CapabilityDiscoveryMode.class)
-                               .isExactlyInstanceOf(SimpleCapabilityDiscoveryMode.class);
+                               .isExactlyInstanceOf(AcceptAllCommandsDiscoveryMode.class);
         });
     }
 

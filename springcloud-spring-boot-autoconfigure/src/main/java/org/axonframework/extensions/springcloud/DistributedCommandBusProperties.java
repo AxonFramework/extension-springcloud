@@ -156,6 +156,15 @@ public class DistributedCommandBusProperties {
         private boolean enabledIgnoreListing = true;
 
         /**
+         * Defines whether the created {@link org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode}
+         * should tell others it accepts all types of commands. If {@code true}, the created {@link
+         * org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode} is wrapped in a {@link
+         * org.axonframework.extensions.springcloud.commandhandling.mode.AcceptAllCommandsDiscoveryMode}. Defaults to
+         * {@code false}.
+         */
+        private boolean enableAcceptAllCommands = false;
+
+        /**
          * Defines the {@link org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode}
          * used by the {@link org.axonframework.extensions.springcloud.commandhandling.SpringCloudCommandRouter}.
          * Defaults to {@link Mode#REST}.
@@ -289,6 +298,28 @@ public class DistributedCommandBusProperties {
             this.enabledIgnoreListing = enabledIgnoreListing;
         }
 
+        /**
+         * Defines whether the created {@link org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode}
+         * (defined through the {@link #mode} settings) is wrapped in an {@link org.axonframework.extensions.springcloud.commandhandling.mode.AcceptAllCommandsDiscoveryMode}.
+         * Defaults to {@code false}, meaning that this node does not by definition accept all commands.
+         *
+         * @return a {@code boolean} specifying whether ignore listing has been disabled
+         */
+        public boolean shouldEnableAcceptAllCommands() {
+            return enableAcceptAllCommands;
+        }
+
+        /**
+         * Sets whether the used {@link org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode}
+         * should be wrapped in an {@link org.axonframework.extensions.springcloud.commandhandling.mode.AcceptAllCommandsDiscoveryMode}.
+         *
+         * @param enableAcceptAllCommands a {@code boolean} defining whether the used {@link org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode}
+         *                                should be wrapped in an {@link org.axonframework.extensions.springcloud.commandhandling.mode.AcceptAllCommandsDiscoveryMode}
+         */
+        public void setEnableAcceptAllCommands(boolean enableAcceptAllCommands) {
+            this.enableAcceptAllCommands = enableAcceptAllCommands;
+        }
+
         public enum Mode {
 
             /**
@@ -296,14 +327,7 @@ public class DistributedCommandBusProperties {
              * will use a {@link org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabilityDiscoveryMode}
              * to discover other nodes and to share its own capabilities.
              */
-            REST,
-
-            /**
-             * On "simple" mode, the {@link org.axonframework.extensions.springcloud.commandhandling.SpringCloudCommandRouter}
-             * will use a {@link org.axonframework.extensions.springcloud.commandhandling.mode.SimpleCapabilityDiscoveryMode}
-             * to discover other nodes and to share its own capabilities.
-             */
-            SIMPLE
+            REST
         }
     }
 }
