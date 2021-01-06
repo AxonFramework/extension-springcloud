@@ -232,7 +232,7 @@ public class SpringCloudHttpBackupCommandRouter extends SpringCloudCommandRouter
                                                .restTemplate(restTemplate)
                                                .serializer(serializerSupplier.get())
                                                .build();
-            capabilityDiscoveryMode(new IgnoreListingDiscoveryMode(restDiscoveryMode));
+            capabilityDiscoveryMode(IgnoreListingDiscoveryMode.builder().delegate(restDiscoveryMode).build());
 
             super.validate();
             assertNonNull(restTemplate, "The RestTemplate is a hard requirement and should be provided");

@@ -105,7 +105,9 @@ public class SpringCloudAutoConfiguration {
                                                                    .build();
         }
         if (springCloudProperties.shouldEnabledIgnoreListing()) {
-            decoratedDiscoveryMode = new IgnoreListingDiscoveryMode(decoratedDiscoveryMode);
+            decoratedDiscoveryMode = IgnoreListingDiscoveryMode.builder()
+                                                               .delegate(decoratedDiscoveryMode)
+                                                               .build();
         }
         return decoratedDiscoveryMode;
     }

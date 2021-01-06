@@ -17,6 +17,7 @@
 package org.axonframework.extensions.springcloud.commandhandling.mode;
 
 import org.axonframework.commandhandling.distributed.CommandMessageFilter;
+import org.axonframework.common.AxonConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.client.ServiceInstance;
@@ -26,6 +27,8 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+
+import static org.axonframework.common.BuilderUtils.assertNonNull;
 
 /**
  * Wrapper implementation of the {@link CapabilityDiscoveryMode}, delegating all operations to another {@code
@@ -49,12 +52,27 @@ public class IgnoreListingDiscoveryMode implements CapabilityDiscoveryMode {
     private final Set<ServiceInstance> ignoredServices = new HashSet<>();
 
     /**
-     * Build an {@link IgnoreListingDiscoveryMode}, wrapping the given {@code delegate}.
+     * Instantiate a {@link Builder} to be able to create a {@link IgnoreListingDiscoveryMode}.
+     * <p>
+     * The delegate {@link CapabilityDiscoveryMode} is a <b>hard requirement</b> and as such should be provided.
      *
-     * @param delegate the {@link CapabilityDiscoveryMode} to enhance with ignore listing logic
+     * @return a {@link Builder} to be able to create a {@link IgnoreListingDiscoveryMode}
      */
-    public IgnoreListingDiscoveryMode(CapabilityDiscoveryMode delegate) {
-        this.delegate = delegate;
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * Instantiate a {@link IgnoreListingDiscoveryMode} based on the fields contained in the {@link Builder}.
+     * <p>
+     * Will assert that the delegate {@link CapabilityDiscoveryMode} is not {@code null} and will throw an {@link
+     * AxonConfigurationException} if this is the case.
+     *
+     * @param builder the {@link Builder} used to instantiate a {@link IgnoreListingDiscoveryMode} instance
+     */
+    protected IgnoreListingDiscoveryMode(Builder builder) {
+        builder.validate();
+        this.delegate = builder.delegate;
     }
 
     @Override
@@ -108,5 +126,39 @@ public class IgnoreListingDiscoveryMode implements CapabilityDiscoveryMode {
         return Objects.equals(serviceInstance.getServiceId(), ignoredInstance.getServiceId())
                 && Objects.equals(serviceInstance.getHost(), ignoredInstance.getHost())
                 && Objects.equals(serviceInstance.getPort(), ignoredInstance.getPort());
+    }
+
+    /**
+     * Builder class to instantiate a {@link IgnoreListingDiscoveryMode}.
+     * <p>
+     * The delegate {@link CapabilityDiscoveryMode} is a <b>hard requirement</b> and as such should be provided.
+     */
+    public static class Builder {
+
+        private CapabilityDiscoveryMode delegate;
+
+        /**
+         * Sets the delegate {@link CapabilityDiscoveryMode} used to delegate the {@link #capabilities(ServiceInstance)}
+         * operation too.
+         *
+         * @param delegate a {@link CapabilityDiscoveryMode} used to delegate the {@link #capabilities(ServiceInstance)}
+         *                 operation too
+         * @return the current Builder instance, for fluent interfacing
+         */
+        public Builder delegate(CapabilityDiscoveryMode delegate) {
+            assertNonNull(delegate, "The delegate CapabilityDiscovery may not be null or empty");
+            this.delegate = delegate;
+            return this;
+        }
+
+        public IgnoreListingDiscoveryMode build() {
+            return new IgnoreListingDiscoveryMode(this);
+        }
+
+        protected void validate() {
+            assertNonNull(
+                    delegate, "The delegate CapabilityDiscoveryMode is a hard requirement and should be provided"
+            );
+        }
     }
 }

@@ -22,7 +22,9 @@ class IgnoreListingDiscoveryModeTest {
 
     private final CapabilityDiscoveryMode delegate = mock(CapabilityDiscoveryMode.class);
 
-    private final IgnoreListingDiscoveryMode testSubject = new IgnoreListingDiscoveryMode(delegate);
+    private final IgnoreListingDiscoveryMode testSubject = IgnoreListingDiscoveryMode.builder()
+                                                                                     .delegate(delegate)
+                                                                                     .build();
 
     private final ServiceInstance testServiceInstance = mock(ServiceInstance.class);
 
