@@ -43,6 +43,7 @@ import org.axonframework.extensions.springcloud.commandhandling.SpringCloudComma
 import org.axonframework.extensions.springcloud.commandhandling.SpringHttpCommandBusConnector;
 import org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode;
 import org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingDiscoveryMode;
+import org.axonframework.extensions.springcloud.commandhandling.mode.MemberCapabilitiesController;
 import org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabilityDiscoveryMode;
 import org.axonframework.extensions.springcloud.commandhandling.mode.AcceptAllCommandsDiscoveryMode;
 import org.axonframework.springboot.autoconfig.AxonServerAutoConfiguration;
@@ -126,6 +127,11 @@ class SpringCloudAutoConfigurationTest {
                                             .isExactlyInstanceOf(IgnoreListingDiscoveryMode.class);
                          assertThat(context).getBean("restCapabilityDiscoveryMode", CapabilityDiscoveryMode.class)
                                             .isExactlyInstanceOf(RestCapabilityDiscoveryMode.class);
+
+                         assertThat(context).getBeanNames(MemberCapabilitiesController.class)
+                                            .hasSize(1);
+                         assertThat(context).getBean(MemberCapabilitiesController.class)
+                                            .isExactlyInstanceOf(MemberCapabilitiesController.class);
 
                          assertThat(context).getBeanNames(CommandRouter.class)
                                             .hasSize(1);

@@ -27,6 +27,7 @@ import org.axonframework.extensions.springcloud.commandhandling.SpringHttpComman
 import org.axonframework.extensions.springcloud.commandhandling.mode.AcceptAllCommandsDiscoveryMode;
 import org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode;
 import org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingDiscoveryMode;
+import org.axonframework.extensions.springcloud.commandhandling.mode.MemberCapabilitiesController;
 import org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabilityDiscoveryMode;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.springboot.autoconfig.InfraConfiguration;
@@ -95,6 +96,17 @@ public class SpringCloudAutoConfiguration {
                                           .build();
     }
 
+    @Bean
+    @ConditionalOnBean(RestCapabilityDiscoveryMode.class)
+    @ConditionalOnMissingBean(MemberCapabilitiesController.class)
+    public MemberCapabilitiesController memberCapabilitiesController(
+            RestCapabilityDiscoveryMode restCapabilityDiscoveryMode
+    ) {
+        return MemberCapabilitiesController.builder()
+                                           .restCapabilityDiscoveryMode(restCapabilityDiscoveryMode)
+                                           .build();
+    }
+
     @Primary
     @Bean("capabilityDiscoveryMode")
     @ConditionalOnExpression("${axon.distributed.spring-cloud.enable-ignore-listing:true} or ${axon.distributed.spring-cloud.enable-accept-all-commands:false}")
@@ -134,11 +146,9 @@ public class SpringCloudAutoConfiguration {
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Bean
     @ConditionalOnMissingBean(CommandBusConnector.class)
-    public SpringHttpCommandBusConnector springHttpCommandBusConnector(
-            @Qualifier("localSegment") CommandBus localSegment,
-            RestTemplate restTemplate,
-            @Qualifier("messageSerializer") Serializer serializer
-    ) {
+    public CommandBusConnector springHttpCommandBusConnector(@Qualifier("localSegment") CommandBus localSegment,
+                                                             RestTemplate restTemplate,
+                                                             @Qualifier("messageSerializer") Serializer serializer) {
         return SpringHttpCommandBusConnector.builder()
                                             .localCommandBus(localSegment)
                                             .restOperations(restTemplate)

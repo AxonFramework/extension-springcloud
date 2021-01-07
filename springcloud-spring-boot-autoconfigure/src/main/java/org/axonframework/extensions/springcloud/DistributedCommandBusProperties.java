@@ -138,9 +138,9 @@ public class DistributedCommandBusProperties {
 
         /**
          * The URL used to perform HTTP GET requests on for retrieving another node's capabilities in a distributed Axon
-         * set up. Defaults to {@code "/message-routing-information"}.
+         * set up. Defaults to {@code "/member-capabilities"}.
          */
-        private String restModeUrl = "/message-routing-information";
+        private String restModeUrl = "/member-capabilities";
 
         /**
          * The optional name of the spring cloud service instance metadata property, that does contain the context root
@@ -195,7 +195,7 @@ public class DistributedCommandBusProperties {
          */
         @Deprecated
         public boolean isFallbackToHttpGet() {
-            return true;
+            return fallbackToHttpGet;
         }
 
         /**
@@ -292,7 +292,7 @@ public class DistributedCommandBusProperties {
          * should be wrapped in an {@link org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingDiscoveryMode}.
          *
          * @param enableIgnoreListing a {@code boolean} defining whether the used {@link org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode}
-         *                             should be wrapped in an {@link org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingDiscoveryMode}
+         *                            should be wrapped in an {@link org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingDiscoveryMode}
          */
         public void setEnableIgnoreListing(boolean enableIgnoreListing) {
             this.enableIgnoreListing = enableIgnoreListing;

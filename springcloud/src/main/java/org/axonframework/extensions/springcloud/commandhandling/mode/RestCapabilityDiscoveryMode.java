@@ -25,9 +25,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -41,24 +38,21 @@ import static org.axonframework.common.BuilderUtils.assertNonEmpty;
 import static org.axonframework.common.BuilderUtils.assertNonNull;
 
 /**
- * Implementation of the {@link CapabilityDiscoveryMode} which uses REST protocol to discover the {@link
- * MemberCapabilities} of other {@link ServiceInstance}s. It also serves the purpose of a GET endpoint, to be able to
- * share this instance's {@code MemberCapabilities}.
+ * Implementation of the {@link CapabilityDiscoveryMode} which uses a {@link RestTemplate} to discover the {@link
+ * MemberCapabilities} of other {@link ServiceInstance}s.
  * <p>
- * By default, this implementation will add services which throw a {@link ServiceInstanceClientException} to an ignore
- * list to not be requested information from in subsequent iterations.
+ * Note that when this REST {@code CapabilityDiscoveryMode} is selected, a member's capabilities should also be
+ * retrievable. To that end a {@link MemberCapabilitiesController} is <b>required</b> to be present.
  *
  * @author Steven van Beelen
  * @since 4.4
  */
-@RestController
-@RequestMapping("${axon.distributed.spring-cloud.rest-mode-url:/message-routing-information}")
 public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode<RestCapabilityDiscoveryMode> {
 
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private final RestTemplate restTemplate;
-    private final String messageRoutingInformationEndpoint;
+    private final String memberCapabilitiesEndpoint;
 
     /**
      * Instantiate a {@link Builder} to be able to create a {@link RestCapabilityDiscoveryMode}.
@@ -84,7 +78,7 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
     protected RestCapabilityDiscoveryMode(Builder builder) {
         super(builder);
         this.restTemplate = builder.restTemplate;
-        this.messageRoutingInformationEndpoint = builder.messageCapabilitiesEndpoint;
+        this.memberCapabilitiesEndpoint = builder.messageCapabilitiesEndpoint;
     }
 
     @Override
@@ -109,7 +103,7 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
             return localCapabilities.get();
         }
         URI destinationUri = UriComponentsBuilder.fromUri(serviceInstance.getUri())
-                                                 .path(messageRoutingInformationEndpoint)
+                                                 .path(memberCapabilitiesEndpoint)
                                                  .build().toUri();
 
         SerializedMemberCapabilities serializedMemberCapabilities = restTemplate.exchange(
@@ -129,13 +123,10 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
      * MemberCapabilities} of the node this {@link CapabilityDiscoveryMode} is a part of. The local membership
      * information is set and updated through the {@link #updateLocalCapabilities(ServiceInstance, int,
      * CommandMessageFilter)} method.
-     * <p>
-     * Can either be called directly or through a GET operation on the specified {@code
-     * messageRoutingInformationEndpoint} of this node.
      *
-     * @return the {@link SerializedMemberCapabilities} if the node this CommandRouter implementation is part of
+     * @return the {@link SerializedMemberCapabilities} of the node this {@link CapabilityDiscoveryMode} implementation
+     * is part of
      */
-    @GetMapping
     public SerializedMemberCapabilities getLocalMemberCapabilities() {
         return SerializedMemberCapabilities.build(localCapabilities.get(), serializer);
     }
@@ -150,7 +141,7 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
     public static class Builder extends AbstractCapabilityDiscoveryMode.Builder<RestCapabilityDiscoveryMode> {
 
         private RestTemplate restTemplate;
-        private String messageCapabilitiesEndpoint = "/message-routing-information";
+        private String messageCapabilitiesEndpoint = "/member-capabilities}";
 
         @Override
         public Builder serializer(Serializer serializer) {
