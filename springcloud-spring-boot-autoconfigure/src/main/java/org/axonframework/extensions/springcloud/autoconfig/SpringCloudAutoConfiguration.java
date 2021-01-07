@@ -35,6 +35,7 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -85,7 +86,7 @@ public class SpringCloudAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
-    @ConditionalOnProperty(value = "axon.distributed.spring-cloud.mode", havingValue = "REST")
+    @ConditionalOnProperty(value = "axon.distributed.spring-cloud.mode", havingValue = "REST", matchIfMissing = true)
     public RestCapabilityDiscoveryMode restCapabilityDiscoveryMode(Serializer serializer, RestTemplate restTemplate) {
         return RestCapabilityDiscoveryMode.builder()
                                           .serializer(serializer)
@@ -96,7 +97,7 @@ public class SpringCloudAutoConfiguration {
 
     @Primary
     @Bean("capabilityDiscoveryMode")
-    @ConditionalOnBean(CapabilityDiscoveryMode.class)
+    @ConditionalOnExpression("${axon.distributed.spring-cloud.enable-ignore-listing:true} or ${axon.distributed.spring-cloud.enable-accept-all-commands:false}")
     public CapabilityDiscoveryMode decorateCapabilityDiscoveryMode(CapabilityDiscoveryMode capabilityDiscoveryMode) {
         CapabilityDiscoveryMode decoratedDiscoveryMode = capabilityDiscoveryMode;
         if (springCloudProperties.shouldEnableAcceptAllCommands()) {

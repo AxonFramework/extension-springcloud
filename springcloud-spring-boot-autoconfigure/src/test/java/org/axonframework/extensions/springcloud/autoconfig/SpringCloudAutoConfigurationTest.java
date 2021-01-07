@@ -69,6 +69,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.axonframework.common.ReflectionUtils.getFieldValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -117,9 +118,13 @@ class SpringCloudAutoConfigurationTest {
                          assertThat(context).getBean(RestTemplate.class)
                                             .isExactlyInstanceOf(RestTemplate.class);
 
-                         assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
+                         assertThat(context).getBeanNames(RestCapabilityDiscoveryMode.class)
                                             .hasSize(1);
+                         assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
+                                            .hasSize(2);
                          assertThat(context).getBean(CapabilityDiscoveryMode.class)
+                                            .isExactlyInstanceOf(IgnoreListingDiscoveryMode.class);
+                         assertThat(context).getBean("restCapabilityDiscoveryMode", CapabilityDiscoveryMode.class)
                                             .isExactlyInstanceOf(RestCapabilityDiscoveryMode.class);
 
                          assertThat(context).getBeanNames(CommandRouter.class)
@@ -141,24 +146,14 @@ class SpringCloudAutoConfigurationTest {
                          CommandBus distributedCommandBus = commandBuses.get("distributedCommandBus");
                          assertEquals(DistributedCommandBus.class, distributedCommandBus.getClass());
                          assertNotEquals(localSegment, distributedCommandBus);
-                         SpringCloudCommandRouter springCloudCommandRouter =
-                                 context.getBean("springCloudCommandRouter", SpringCloudCommandRouter.class);
-                         CapabilityDiscoveryMode capabilityDiscoveryMode = ReflectionUtils.getFieldValue(
-                                 SpringCloudCommandRouter.class.getDeclaredField("capabilityDiscoveryMode"),
-                                 springCloudCommandRouter
-                         );
-                         assertTrue(
-                                 capabilityDiscoveryMode.getClass()
-                                                        .isAssignableFrom(IgnoreListingDiscoveryMode.class)
-                         );
                      });
     }
 
     @Test
-    void testDisabledIgnoreListingCreatesRestCapabilityDiscoveryMode() {
+    void testDisablingIgnoreListingOnlyCreatesRestCapabilityDiscoveryMode() {
         contextRunner.withPropertyValues(
                 "axon.distributed.enabled=true",
-                "axon.distributed.springCloud.disableIgnoreListing=true"
+                "axon.distributed.spring-cloud.enable-ignore-listing=false"
         ).run(context -> {
             assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
                                .hasSize(1);
@@ -168,16 +163,72 @@ class SpringCloudAutoConfigurationTest {
     }
 
     @Test
-    void testDisabledIgnoreListingAndSimpleModeCreatesSimpleCapabilityDiscoveryMode() {
+    void testDisablingIgnoreListingAndAcceptAllOnlyCreatesRestCapabilityDiscoveryMode() {
         contextRunner.withPropertyValues(
                 "axon.distributed.enabled=true",
-                "axon.distributed.springCloud.mode=simple",
-                "axon.distributed.springCloud.disableIgnoreListing=true"
+                "axon.distributed.spring-cloud.enable-ignore-listing=false",
+                "axon.distributed.spring-cloud.enable-accept-all-commands=false"
         ).run(context -> {
             assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
                                .hasSize(1);
             assertThat(context).getBean(CapabilityDiscoveryMode.class)
+                               .isExactlyInstanceOf(RestCapabilityDiscoveryMode.class);
+        });
+    }
+
+    @Test
+    void testEnablingIgnoreListingCreatesTwoCapabilityDiscoveryModeInstances() {
+        contextRunner.withPropertyValues(
+                "axon.distributed.enabled=true",
+                "axon.distributed.spring-cloud.enable-ignore-listing=true",
+                "axon.distributed.spring-cloud.enable-accept-all-commands=false"
+        ).run(context -> {
+            assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
+                               .hasSize(2);
+            assertThat(context).getBean("restCapabilityDiscoveryMode", CapabilityDiscoveryMode.class)
+                               .isExactlyInstanceOf(RestCapabilityDiscoveryMode.class);
+            assertThat(context).getBean(CapabilityDiscoveryMode.class)
+                               .isExactlyInstanceOf(IgnoreListingDiscoveryMode.class);
+        });
+    }
+
+    @Test
+    void testEnablingAcceptAllCreatesTwoCapabilityDiscoveryModeInstances() {
+        contextRunner.withPropertyValues(
+                "axon.distributed.enabled=true",
+                "axon.distributed.spring-cloud.enable-ignore-listing=false",
+                "axon.distributed.spring-cloud.enable-accept-all-commands=true"
+        ).run(context -> {
+            assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
+                               .hasSize(2);
+            assertThat(context).getBean("restCapabilityDiscoveryMode", CapabilityDiscoveryMode.class)
+                               .isExactlyInstanceOf(RestCapabilityDiscoveryMode.class);
+            assertThat(context).getBean(CapabilityDiscoveryMode.class)
                                .isExactlyInstanceOf(AcceptAllCommandsDiscoveryMode.class);
+        });
+    }
+
+    @Test
+    void testEnablingIgnoreListingAndAcceptAllCreatesTwoCapabilityDiscoveryModeInstances() {
+        contextRunner.withPropertyValues(
+                "axon.distributed.enabled=true",
+                "axon.distributed.spring-cloud.enable-ignore-listing=True",
+                "axon.distributed.spring-cloud.enable-accept-all-commands=true"
+        ).run(context -> {
+            assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
+                               .hasSize(2);
+            assertThat(context).getBean("restCapabilityDiscoveryMode", CapabilityDiscoveryMode.class)
+                               .isExactlyInstanceOf(RestCapabilityDiscoveryMode.class);
+            assertThat(context).getBean(CapabilityDiscoveryMode.class)
+                               .isExactlyInstanceOf(IgnoreListingDiscoveryMode.class);
+            CapabilityDiscoveryMode capabilityDiscoveryMode =
+                    context.getBean("capabilityDiscoveryMode", CapabilityDiscoveryMode.class);
+
+            assertTrue(capabilityDiscoveryMode.getClass().isAssignableFrom(IgnoreListingDiscoveryMode.class));
+            CapabilityDiscoveryMode delegate = getFieldValue(
+                    IgnoreListingDiscoveryMode.class.getDeclaredField("delegate"), capabilityDiscoveryMode
+            );
+            assertTrue(delegate.getClass().isAssignableFrom(AcceptAllCommandsDiscoveryMode.class));
         });
     }
 
