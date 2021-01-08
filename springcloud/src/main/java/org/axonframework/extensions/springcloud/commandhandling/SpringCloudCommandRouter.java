@@ -213,6 +213,11 @@ public class SpringCloudCommandRouter implements CommandRouter {
                                                          .filter(serviceInstanceFilter)
                                                          .collect(Collectors.toList());
 
+        // If no instances are discovered, at least make sure the local instance is updated
+        if (instances.isEmpty()) {
+            instances.add(localServiceInstance);
+        }
+
         for (ServiceInstance serviceInstance : instances) {
             logger.debug("Updating membership for service instance: [{}]", serviceInstance);
             capabilityDiscoveryMode.capabilities(serviceInstance)
