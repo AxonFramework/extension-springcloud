@@ -132,7 +132,7 @@ public class SpringCloudCommandRouter implements CommandRouter {
      *                        from
      * @return true if the given {@code serviceInstance} contains all expected message routing info keys; false if one
      * of the expected message routing info keys is missing.
-     * @deprecated no current {@link CapabilityDiscoveryMode} basis itself on {@link ServiceInstance#getMetadata()} and
+     * @deprecated no current {@link CapabilityDiscoveryMode} bases itself on {@link ServiceInstance#getMetadata()} and
      * as such this filter will be removed
      */
     @Deprecated
@@ -170,9 +170,9 @@ public class SpringCloudCommandRouter implements CommandRouter {
      *              as a trigger for this function
      * @see SpringCloudCommandRouter#buildMember(ServiceInstance)
      */
+    @SuppressWarnings("unused")
     @EventListener
-    @SuppressWarnings({"UnusedParameters", "rawtypes"})
-    public void resetLocalMembership(InstanceRegisteredEvent event) {
+    public void resetLocalMembership(InstanceRegisteredEvent<?> event) {
         registered = true;
 
         Optional<Member> startUpPhaseLocalMember =
@@ -385,11 +385,11 @@ public class SpringCloudCommandRouter implements CommandRouter {
 
         /**
          * Defines the {@link CapabilityDiscoveryMode} used by this {@link CommandRouter} implementation. The {@code
-         * CapabilityDiscoveryMode} is in charge of discovering the capabilities of other nodes and sharing this nodes
+         * CapabilityDiscoveryMode} is in charge of discovering the capabilities of other nodes and sharing this node's
          * capabilities.
          *
          * @param capabilityDiscoveryMode a {@link CapabilityDiscoveryMode} in charge of discovering the capabilities of
-         *                                other nodes and sharing this nodes capabilities
+         *                                other nodes and sharing this node's capabilities
          * @return the current Builder instance, for fluent interfacing
          */
         public Builder capabilityDiscoveryMode(CapabilityDiscoveryMode capabilityDiscoveryMode) {

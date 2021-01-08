@@ -20,6 +20,7 @@ import org.axonframework.commandhandling.distributed.CommandMessageFilter;
 import org.axonframework.commandhandling.distributed.Member;
 import org.axonframework.common.AxonConfigurationException;
 import org.axonframework.serialization.Serializer;
+import org.axonframework.serialization.xml.XStreamSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.client.ServiceInstance;
@@ -33,6 +34,7 @@ import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static org.axonframework.common.BuilderUtils.assertNonEmpty;
 import static org.axonframework.common.BuilderUtils.assertNonNull;
@@ -51,15 +53,16 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
 
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
+    private final Serializer serializer;
     private final RestTemplate restTemplate;
     private final String memberCapabilitiesEndpoint;
 
     /**
      * Instantiate a {@link Builder} to be able to create a {@link RestCapabilityDiscoveryMode}.
      * <p>
-     * The {@link Serializer} is defaulted to a {@link org.axonframework.serialization.xml.XStreamSerializer} instance,
-     * the {@code messageCapabilitiesEndpoint} to {@code "/message-routing-information"}, and ignore listing is enabled.
-     * The {@link RestTemplate} is a <b>hard requirement</b> and as such should be provided.
+     * The {@link Serializer} is defaulted to a {@link org.axonframework.serialization.xml.XStreamSerializer} instance
+     * and the {@code messageCapabilitiesEndpoint} to {@code "/message-routing-information"}. The {@link RestTemplate}
+     * is a <b>hard requirement</b> and as such should be provided.
      *
      * @return a {@link Builder} to be able to create a {@link RestCapabilityDiscoveryMode}
      */
@@ -77,6 +80,7 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
      */
     protected RestCapabilityDiscoveryMode(Builder builder) {
         super(builder);
+        this.serializer = builder.serializerSupplier.get();
         this.restTemplate = builder.restTemplate;
         this.memberCapabilitiesEndpoint = builder.messageCapabilitiesEndpoint;
     }
@@ -93,7 +97,8 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
             logger.info("Failed to receive the capabilities from ServiceInstance [{}] under host [{}] and port [{}]. "
                                 + "Will temporarily set this instance to deny all incoming messages.",
                         serviceInstance.getServiceId(), serviceInstance.getHost(), serviceInstance.getPort());
-            logger.debug("Denying all messages due to the following exception: ", e);
+            logger.debug("Service Instance [{}] is denying all messages due to the following exception: ",
+                         serviceInstance, e);
             return Optional.of(DefaultMemberCapabilities.INCAPABLE_MEMBER);
         }
     }
@@ -134,18 +139,26 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
     /**
      * Builder class to instantiate a {@link RestCapabilityDiscoveryMode}.
      * <p>
-     * The {@link Serializer} is defaulted to a {@link org.axonframework.serialization.xml.XStreamSerializer} instance,
-     * the {@code messageCapabilitiesEndpoint} to {@code "/message-routing-information"}, and ignore listing is enabled.
-     * The {@link RestTemplate} is a <b>hard requirement</b> and as such should be provided.
+     * The {@link Serializer} is defaulted to a {@link org.axonframework.serialization.xml.XStreamSerializer} instance
+     * and the {@code messageCapabilitiesEndpoint} to {@code "/message-routing-information"}. The {@link RestTemplate}
+     * is a <b>hard requirement</b> and as such should be provided.
      */
     public static class Builder extends AbstractCapabilityDiscoveryMode.Builder<RestCapabilityDiscoveryMode> {
 
+        private Supplier<Serializer> serializerSupplier = XStreamSerializer::defaultSerializer;
         private RestTemplate restTemplate;
         private String messageCapabilitiesEndpoint = "/member-capabilities}";
 
-        @Override
+        /**
+         * Sets the {@link Serializer} used to de-/serialize the {@link CommandMessageFilter}. Defaults to the {@link
+         * XStreamSerializer}.
+         *
+         * @param serializer a {@link Serializer} used to de-/serialize {@link CommandMessageFilter}
+         * @return the current Builder instance, for fluent interfacing
+         */
         public Builder serializer(Serializer serializer) {
-            super.serializer(serializer);
+            assertNonNull(serializer, "Serializer may not be null");
+            this.serializerSupplier = () -> serializer;
             return this;
         }
 

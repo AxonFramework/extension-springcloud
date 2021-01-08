@@ -18,26 +18,19 @@ package org.axonframework.extensions.springcloud.commandhandling.mode;
 
 import org.axonframework.commandhandling.distributed.CommandMessageFilter;
 import org.axonframework.common.AxonConfigurationException;
-import org.axonframework.serialization.Serializer;
-import org.axonframework.serialization.xml.XStreamSerializer;
 import org.springframework.cloud.client.ServiceInstance;
 
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
-
-import static org.axonframework.common.BuilderUtils.assertNonNull;
 
 /**
- * Abstract implementation of the {@link CapabilityDiscoveryMode} providing discovery basics like the {@link Serializer}
- * for the {@link MemberCapabilities}.
+ * Abstract implementation of the {@link CapabilityDiscoveryMode} maintaining the local {@link ServiceInstance} and
+ * {@link MemberCapabilities}.
  *
  * @author Steven van Beelen
  * @since 4.4
  */
 public abstract class AbstractCapabilityDiscoveryMode<B extends CapabilityDiscoveryMode>
         implements CapabilityDiscoveryMode {
-
-    protected final Serializer serializer;
 
     protected AtomicReference<ServiceInstance> localInstance;
     protected AtomicReference<MemberCapabilities> localCapabilities;
@@ -49,7 +42,6 @@ public abstract class AbstractCapabilityDiscoveryMode<B extends CapabilityDiscov
      */
     protected AbstractCapabilityDiscoveryMode(Builder<B> builder) {
         builder.validate();
-        serializer = builder.serializerSupplier.get();
         localInstance = new AtomicReference<>();
         localCapabilities = new AtomicReference<>(DefaultMemberCapabilities.INCAPABLE_MEMBER);
     }
@@ -64,29 +56,10 @@ public abstract class AbstractCapabilityDiscoveryMode<B extends CapabilityDiscov
 
     /**
      * Builder class to instantiate an {@link AbstractCapabilityDiscoveryMode}.
-     * <p>
-     * The {@link Serializer} is defaulted to a {@link org.axonframework.serialization.xml.XStreamSerializer} instance
-     * and ignore listing is enabled.
      *
      * @param <B> generic defining the type of {@link CapabilityDiscoveryMode} this builder will create
      */
     protected abstract static class Builder<B extends CapabilityDiscoveryMode> {
-
-        private Supplier<Serializer> serializerSupplier = XStreamSerializer::defaultSerializer;
-
-        /**
-         * Sets the {@link Serializer} used to de-/serialize the {@link CommandMessageFilter}. It is strongly
-         * recommended to use the {@link XStreamSerializer} for this, as the {@code CommandMessageFilter} is not set up
-         * to be serialized through Jackson. Defaults to the {@link XStreamSerializer}.
-         *
-         * @param serializer a {@link Serializer} used to de-/serialize {@link CommandMessageFilter}
-         * @return the current Builder instance, for fluent interfacing
-         */
-        public Builder<B> serializer(Serializer serializer) {
-            assertNonNull(serializer, "Serializer may not be null");
-            this.serializerSupplier = () -> serializer;
-            return this;
-        }
 
         /**
          * Initializes a {@link CapabilityDiscoveryMode} implementation as specified through this Builder.

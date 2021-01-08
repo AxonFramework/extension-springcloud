@@ -248,7 +248,7 @@ public class DistributedCommandBusProperties {
          * Sets the URL relative to the host's root to retrieve a nodes handling capabilities from. This is also the
          * address where this node will expose its own capabilities on.
          *
-         * @param restModeUrl the URL relative to the host's root to retrieve Instance Meta Data from.
+         * @param restModeUrl the URL relative to the host's root to retrieve a nodes handling capabilities from
          */
         public void setRestModeUrl(String restModeUrl) {
             this.restModeUrl = restModeUrl;
@@ -325,7 +325,7 @@ public class DistributedCommandBusProperties {
             /**
              * On "REST" mode, the {@link org.axonframework.extensions.springcloud.commandhandling.SpringCloudCommandRouter}
              * will use a {@link org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabilityDiscoveryMode}
-             * to discover other nodes and to share its own capabilities.
+             * to discover other nodes.
              */
             REST
         }

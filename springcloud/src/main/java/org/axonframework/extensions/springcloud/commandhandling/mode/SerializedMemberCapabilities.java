@@ -26,7 +26,7 @@ import java.beans.ConstructorProperties;
 
 /**
  * Holder of the {@code loadFactor} and the serialized {@link CommandMessageFilter} of a specific member. Allows for
- * easier data transfer. Both the {@code loadFactor} and {@code CommandMessageFilter} are used to recreate a {@link
+ * easier data transfer. Both the {@code loadFactor} and {@code CommandMessageFilter} can be used to recreate a {@link
  * MemberCapabilities} object. The serialized {@code CommandMessageFilter} is kept as a {@link String} of the contents
  * and a {@code String} defining the class type.
  *

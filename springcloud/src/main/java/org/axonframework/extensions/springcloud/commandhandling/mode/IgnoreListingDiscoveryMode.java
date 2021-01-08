@@ -43,7 +43,7 @@ import static org.axonframework.common.BuilderUtils.assertNonNull;
  * @author Steven van Beelen
  * @since 4.4
  */
-public class IgnoreListingDiscoveryMode implements CapabilityDiscoveryMode {
+public class IgnoreListingDiscoveryMode extends AbstractCapabilityDiscoveryMode<IgnoreListingDiscoveryMode> {
 
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
@@ -71,7 +71,7 @@ public class IgnoreListingDiscoveryMode implements CapabilityDiscoveryMode {
      * @param builder the {@link Builder} used to instantiate a {@link IgnoreListingDiscoveryMode} instance
      */
     protected IgnoreListingDiscoveryMode(Builder builder) {
-        builder.validate();
+        super(builder);
         this.delegate = builder.delegate;
     }
 
@@ -133,7 +133,7 @@ public class IgnoreListingDiscoveryMode implements CapabilityDiscoveryMode {
      * <p>
      * The delegate {@link CapabilityDiscoveryMode} is a <b>hard requirement</b> and as such should be provided.
      */
-    public static class Builder {
+    public static class Builder extends AbstractCapabilityDiscoveryMode.Builder<IgnoreListingDiscoveryMode> {
 
         private CapabilityDiscoveryMode delegate;
 
@@ -151,10 +151,12 @@ public class IgnoreListingDiscoveryMode implements CapabilityDiscoveryMode {
             return this;
         }
 
+        @Override
         public IgnoreListingDiscoveryMode build() {
             return new IgnoreListingDiscoveryMode(this);
         }
 
+        @Override
         protected void validate() {
             assertNonNull(
                     delegate, "The delegate CapabilityDiscoveryMode is a hard requirement and should be provided"

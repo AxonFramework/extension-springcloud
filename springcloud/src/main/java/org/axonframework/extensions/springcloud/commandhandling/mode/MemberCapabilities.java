@@ -32,7 +32,7 @@ public interface MemberCapabilities extends Serializable {
     /**
      * The load factor of the given member, defining the amount of load it is willing to take on.
      *
-     * @return an {@code int} defining the amount of load it is willing to take on
+     * @return an {@code int} defining the amount of load this member is willing to take on
      */
     int getLoadFactor();
 

@@ -26,23 +26,24 @@ import java.util.Optional;
 import static org.axonframework.common.BuilderUtils.assertNonNull;
 
 /**
- * Implementation of the {@link CapabilityDiscoveryMode} which defaults it's own {@link MemberCapabilities} to accept
+ * Implementation of the {@link CapabilityDiscoveryMode} which defaults its own {@link MemberCapabilities} to accept
  * <b>all</b> incoming commands. It does so by enforcing the {@link CommandMessageFilter} to {@link AcceptAll} on each
  * invocation of {@link #updateLocalCapabilities(ServiceInstance, int, CommandMessageFilter)}. This implementation thus
- * <em>does not</em> take into account the given {@link CommandMessageFilter} upon {@link
- * #updateLocalCapabilities(ServiceInstance, int, CommandMessageFilter)}.
+ * <em>does not</em> take into account the given {@link CommandMessageFilter} upon any {@link
+ * #updateLocalCapabilities(ServiceInstance, int, CommandMessageFilter)} invocation.
  * <p>
  * Using this implementation would be a valid solution in a homogeneous command handling system, where every node can
  * handling everything.
  * <p>
  * Note that both the {@link #updateLocalCapabilities(ServiceInstance, int, CommandMessageFilter)} and {@link
  * #capabilities(ServiceInstance)} operations are delegated towards another {@code CapabilityDiscoveryMode} instance to
- * ensure {@code MemberCapabilities} can still be found and delegated correctly.
+ * ensure {@code MemberCapabilities} can still be found and delegated as is required of a {@link
+ * CapabilityDiscoveryMode} implementation.
  *
  * @author Steven van Beelen
  * @since 4.4
  */
-public class AcceptAllCommandsDiscoveryMode implements CapabilityDiscoveryMode {
+public class AcceptAllCommandsDiscoveryMode extends AbstractCapabilityDiscoveryMode<AcceptAllCommandsDiscoveryMode> {
 
     private final CapabilityDiscoveryMode delegate;
 
@@ -66,7 +67,7 @@ public class AcceptAllCommandsDiscoveryMode implements CapabilityDiscoveryMode {
      * @param builder the {@link Builder} used to instantiate a {@link AcceptAllCommandsDiscoveryMode} instance
      */
     protected AcceptAllCommandsDiscoveryMode(Builder builder) {
-        builder.validate();
+        super(builder);
         this.delegate = builder.delegate;
     }
 
@@ -88,7 +89,7 @@ public class AcceptAllCommandsDiscoveryMode implements CapabilityDiscoveryMode {
      * <p>
      * The delegate {@link CapabilityDiscoveryMode} is a <b>hard requirement</b> and as such should be provided.
      */
-    public static class Builder {
+    public static class Builder extends AbstractCapabilityDiscoveryMode.Builder<AcceptAllCommandsDiscoveryMode> {
 
         private CapabilityDiscoveryMode delegate;
 
@@ -106,10 +107,12 @@ public class AcceptAllCommandsDiscoveryMode implements CapabilityDiscoveryMode {
             return this;
         }
 
+        @Override
         public AcceptAllCommandsDiscoveryMode build() {
             return new AcceptAllCommandsDiscoveryMode(this);
         }
 
+        @Override
         protected void validate() {
             assertNonNull(
                     delegate, "The delegate CapabilityDiscoveryMode is a hard requirement and should be provided"

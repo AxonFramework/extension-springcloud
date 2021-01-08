@@ -53,7 +53,7 @@ import static org.axonframework.common.BuilderUtils.assertNonNull;
  * @author Steven van Beelen
  * @since 3.1
  * @deprecated in favor of using the regular {@link SpringCloudCommandRouter} with the {@link
- * org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabilityDiscoveryMode}.
+ * org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabilityDiscoveryMode}
  */
 @Deprecated
 @RestController
