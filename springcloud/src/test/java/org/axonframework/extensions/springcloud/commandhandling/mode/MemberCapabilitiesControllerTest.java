@@ -39,6 +39,8 @@ class MemberCapabilitiesControllerTest {
 
     @Test
     void testBuildWithoutRestCapabilityDiscoveryModeThrowsAxonConfigurationException() {
-        assertThrows(AxonConfigurationException.class, () -> MemberCapabilitiesController.builder().build());
+        MemberCapabilitiesController.Builder testSubject = MemberCapabilitiesController.builder();
+
+        assertThrows(AxonConfigurationException.class, testSubject::build);
     }
 }

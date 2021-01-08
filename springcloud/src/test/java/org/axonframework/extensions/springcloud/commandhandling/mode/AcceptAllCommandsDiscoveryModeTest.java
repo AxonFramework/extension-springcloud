@@ -50,6 +50,8 @@ class AcceptAllCommandsDiscoveryModeTest {
 
     @Test
     void testBuildWithoutDelegateThrowsAxonConfigurationException() {
-        assertThrows(AxonConfigurationException.class, () -> AcceptAllCommandsDiscoveryMode.builder().build());
+        AcceptAllCommandsDiscoveryMode.Builder builderTestSubject = AcceptAllCommandsDiscoveryMode.builder();
+
+        assertThrows(AxonConfigurationException.class, builderTestSubject::build);
     }
 }
