@@ -26,7 +26,7 @@
 
     <groupId>org.axonframework.extensions.springcloud</groupId>
     <artifactId>axon-springcloud-spring-boot-starter</artifactId>
-    <version>4.4-SNAPSHOT</version>
+    <version>4.4</version>
 
     <name>Axon Framework Spring Cloud Extension - Spring Boot Starter</name>
     <description>Spring Boot Starter module for the Spring Cloud Extension of Axon Framework</description>
@@ -155,7 +155,7 @@
         <connection>scm:git:git://github.com/AxonFramework/extension-springcloud.git</connection>
         <developerConnection>scm:git:git@github.com:AxonFramework/extension-springcloud.git</developerConnection>
         <url>https://github.com/AxonFramework/extension-springcloud</url>
-        <tag>HEAD</tag>
+        <tag>axon-springcloud-4.4</tag>
     </scm>
 
 </project>
