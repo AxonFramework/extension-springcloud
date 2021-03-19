@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!--
   ~ Copyright (c) 2010-2020. Axon Framework
   ~
@@ -14,14 +14,15 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   -->
-
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <groupId>org.axonframework.extensions.springcloud</groupId>
     <artifactId>axon-springcloud-parent</artifactId>
     <version>4.5-SNAPSHOT</version>
     <modules>
         <module>springcloud</module>
+        <module>springcloud-streams</module>
         <module>springcloud-spring-boot-autoconfigure</module>
         <module>springcloud-spring-boot-starter</module>
     </modules>
@@ -54,6 +55,8 @@
         <spring-cloud-release.version>Hoxton.SR10</spring-cloud-release.version>
 
         <spring.version>5.3.4</spring.version>
+        <spring-messaging.version>5.3.4</spring-messaging.version>
+        <spring-integration.version>5.3.4.RELEASE</spring-integration.version>
         <spring.boot.version>2.3.9.RELEASE</spring.boot.version>
 
         <slf4j.version>1.7.30</slf4j.version>
