@@ -50,7 +50,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <axon.version>4.4.8</axon.version>
+        <axon.version>4.5</axon.version>
         <spring-cloud-release.version>Hoxton.SR10</spring-cloud-release.version>
 
         <spring.version>5.3.5</spring.version>
