@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2014. Axon Framework
+ * Copyright (c) 2010-2021. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,15 @@ package org.axonframework.extensions.springcloud.eventhandling.converter;
 import org.axonframework.eventhandling.EventMessage;
 import org.springframework.messaging.Message;
 
+import java.util.Optional;
+
 /**
  * Interface describing a mechanism that converts Spring Messages from an Axon Messages and vice versa.
  *
  * @author Mehdi Chitforoosh
- * @since 4.1
+ * @since 4.5
  */
-public interface SpringMessageEventMessageConverter {
+public interface SpringMessageConverter {
 
     /**
      * Creates an Spring Message from given {@code eventMessage}.
@@ -34,7 +36,7 @@ public interface SpringMessageEventMessageConverter {
      * @return an Spring Message containing the payload and headers
      * Broker.
      */
-    Message<?> toSpringMessage(EventMessage<?> eventMessage);
+    Message<?> createSpringMessage(EventMessage<?> eventMessage);
 
     /**
      * Reconstruct an EventMessage from the given spring message. The returned value
@@ -43,5 +45,5 @@ public interface SpringMessageEventMessageConverter {
      * @param message spring message
      * @return The Event Message to publish on the local event processors
      */
-    EventMessage<?> toEventMessage(Message<?> message);
+    Optional<EventMessage<?>> readSpringMessage(Message<?> message);
 }
