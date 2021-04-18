@@ -53,6 +53,7 @@
 
         <axon.version>4.4.7</axon.version>
         <spring-cloud-release.version>Hoxton.SR10</spring-cloud-release.version>
+        <spring-cloud-stream.version>Horsham.SR11</spring-cloud-stream.version>
 
         <spring.version>5.3.4</spring.version>
         <spring-messaging.version>5.3.4</spring-messaging.version>
