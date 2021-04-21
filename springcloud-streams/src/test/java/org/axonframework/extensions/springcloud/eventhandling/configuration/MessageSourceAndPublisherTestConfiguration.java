@@ -35,6 +35,8 @@ public class MessageSourceAndPublisherTestConfiguration {
     @Bean
     public SpringStreamMessageSource source(EventBus eventBus, SpringMessageConverter converter) {
         return SpringStreamMessageSource.builder()
+                // Optional
+//                .eventBus(eventBus)
                 .converter(converter)
                 .build();
     }
