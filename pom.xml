@@ -61,7 +61,7 @@
 
         <mockito.version>3.11.0</mockito.version>
         <jackson.version>2.12.3</jackson.version>
-        <commons-io.version>2.9.0</commons-io.version>
+        <commons-io.version>2.10.0</commons-io.version>
         <javax.jaxb-api.version>2.3.1</javax.jaxb-api.version>
         <guava-collections.version>r03</guava-collections.version>
         <junit.jupiter.version>5.7.2</junit.jupiter.version>
