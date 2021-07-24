@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!--
-  ~ Copyright (c) 2010-2020. Axon Framework
+  ~ Copyright (c) 2010-2021. Axon Framework
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -51,26 +51,26 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <axon.version>4.4.7</axon.version>
-        <spring-cloud-release.version>Hoxton.SR10</spring-cloud-release.version>
-        <spring-cloud-stream.version>Horsham.SR11</spring-cloud-stream.version>
+        <axon.version>4.5.3</axon.version>
+        <spring-cloud-release.version>Hoxton.SR12</spring-cloud-release.version>
+        <spring-cloud-stream.version>Horsham.SR12</spring-cloud-stream.version>
 
-        <spring.version>5.3.4</spring.version>
-        <spring-messaging.version>5.3.4</spring-messaging.version>
-        <spring-integration.version>5.3.4.RELEASE</spring-integration.version>
-        <spring.boot.version>2.3.9.RELEASE</spring.boot.version>
+        <spring.version>5.3.9</spring.version>
+        <spring-messaging.version>{spring.version}</spring-messaging.version>
+        <spring-integration.version>5.4.8</spring-integration.version>
+        <spring.boot.version>2.3.12.RELEASE</spring.boot.version>
 
-        <slf4j.version>1.7.30</slf4j.version>
-        <log4j.version>2.14.0</log4j.version>
+        <slf4j.version>1.7.32</slf4j.version>
+        <log4j.version>2.14.1</log4j.version>
 
-        <mockito.version>3.8.0</mockito.version>
-        <jackson.version>2.12.2</jackson.version>
-        <commons-io.version>2.8.0</commons-io.version>
+        <mockito.version>3.11.2</mockito.version>
+        <jackson.version>2.12.4</jackson.version>
+        <commons-io.version>2.11.0</commons-io.version>
         <javax.jaxb-api.version>2.3.1</javax.jaxb-api.version>
         <guava-collections.version>r03</guava-collections.version>
-        <junit.jupiter.version>5.7.1</junit.jupiter.version>
+        <junit.jupiter.version>5.7.2</junit.jupiter.version>
 
-        <jacoco-maven-plugin.version>0.8.6</jacoco-maven-plugin.version>
+        <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
     </properties>
 
     <dependencies>
@@ -281,7 +281,7 @@
             </plugin>
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.3.0</version>
                 <executions>
                     <execution>
                         <id>attach-javadoc</id>
@@ -292,7 +292,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <additionalparam>-Xdoclint:none</additionalparam>
+                    <doclint>none</doclint>
                 </configuration>
             </plugin>
             <plugin>
@@ -360,7 +360,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
+                        <version>3.0.1</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
