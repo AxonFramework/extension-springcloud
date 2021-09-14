@@ -19,52 +19,40 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>org.axonframework.extensions.springcloud</groupId>
         <artifactId>axon-springcloud-parent</artifactId>
+        <groupId>org.axonframework.extensions.springcloud</groupId>
         <version>4.5-SNAPSHOT</version>
     </parent>
 
-    <artifactId>axon-springcloud</artifactId>
+    <artifactId>axon-springcloud-streams</artifactId>
 
-    <name>Axon Framework Spring Cloud Extension</name>
+    <name>Axon Framework Spring Cloud Stream Extension</name>
     <description>
-        Module containing CommandBus implementations for distributing commands over several nodes based on Spring Cloud.
+        Module containing Message Adapter implementations for distributing events over Spring Cloud Stream.
     </description>
 
     <packaging>jar</packaging>
 
     <dependencies>
+
         <dependency>
             <groupId>org.axonframework</groupId>
             <artifactId>axon-messaging</artifactId>
             <version>${axon.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
-            <version>${spring.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-expression</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>org.springframework</groupId>
-                    <artifactId>spring-aop</artifactId>
-                </exclusion>
-            </exclusions>
+            <artifactId>spring-messaging</artifactId>
+            <version>${spring-messaging.version}</version>
         </dependency>
-
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-context</artifactId>
+            <groupId>org.springframework.integration</groupId>
+            <artifactId>spring-integration-core</artifactId>
+            <version>${spring-integration.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-commons</artifactId>
-            <optional>true</optional>
+            <artifactId>spring-cloud-stream</artifactId>
         </dependency>
 
         <dependency>
@@ -82,11 +70,11 @@
         </dependency>
 
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava-collections</artifactId>
-            <version>${guava-collections.version}</version>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-stream-test-support</artifactId>
             <scope>test</scope>
         </dependency>
+
     </dependencies>
 
     <build>
