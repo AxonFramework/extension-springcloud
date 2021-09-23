@@ -64,7 +64,7 @@
         <commons-io.version>2.11.0</commons-io.version>
         <javax.jaxb-api.version>2.3.1</javax.jaxb-api.version>
         <guava-collections.version>r03</guava-collections.version>
-        <junit.jupiter.version>5.8.0</junit.jupiter.version>
+        <junit.jupiter.version>5.8.1</junit.jupiter.version>
 
         <jacoco-maven-plugin.version>0.8.7</jacoco-maven-plugin.version>
     </properties>
