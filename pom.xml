@@ -57,7 +57,7 @@
         <spring.boot.version>2.6.1</spring.boot.version>
 
         <slf4j.version>1.7.32</slf4j.version>
-        <log4j.version>2.17.0</log4j.version>
+        <log4j.version>2.17.1</log4j.version>
 
         <mockito.version>4.2.0</mockito.version>
         <jackson.version>2.13.1</jackson.version>
