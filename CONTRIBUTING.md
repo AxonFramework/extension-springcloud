@@ -21,7 +21,7 @@ If you're contributing code, please take care of the following:
 ### Contributor Licence Agreement
 
 To keep everyone out of trouble (both you and us), we require that all contributors (digitally) sign a Contributor
-License Agreement. Basically, the agreement says that we maay freely use the code you contribute to the Axon Framework
+License Agreement. Basically, the agreement says that we may freely use the code you contribute to the Axon Framework
 Spring Cloud Extension, and that we won't hold you liable for any unfortunate side effects that the code may cause.
 
 To sign the CLA, visit: https://cla-assistant.io/AxonFramework/extension-springcloud
