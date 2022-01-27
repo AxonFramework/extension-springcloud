@@ -41,6 +41,7 @@ jobs:
             ${{ runner.os }}-maven
 
       - name: Regular Build
+        if: ${{ !matrix.sonar-enabled }}
         run: |
           ./mvnw -B -U clean verify
 
