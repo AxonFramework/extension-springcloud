@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020. Axon Framework
+ * Copyright (c) 2010-2022. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,22 +23,31 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cloud.client.ServiceInstance;
 
 import java.lang.invoke.MethodHandles;
+import java.time.Clock;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
 import static org.axonframework.common.BuilderUtils.assertNonNull;
+import static org.axonframework.common.BuilderUtils.assertStrictPositive;
 
 /**
  * Wrapper implementation of the {@link CapabilityDiscoveryMode}, delegating all operations to another {@code
  * CapabilityDiscoveryMode} instance. When discovering {@link #capabilities(ServiceInstance)}, the given {@link
  * ServiceInstance} might be added to the ignored instance list.
  * <p>
- * {@code ServiceInstance}s are ignored whenever a {@link ServiceInstanceClientException} is thrown, upon which the
+ * {@code ServiceInstances} are ignored whenever a {@link ServiceInstanceClientException} is thrown, upon which the
  * {@code ServiceInstance} is stored for subsequent invocation. On the next {@link #capabilities(ServiceInstance)}
  * iteration, the given {@code ServiceInstance} is validated to <b>not</b> be present in the set of ignored service
  * instance identifiers.
+ * <p>
+ * Ignored {@code ServiceInstances} are evicted from the list after a configurable {@code expireThreshold} (through the
+ * {@link Builder#expireThreshold(long)}. Eviction occurs during <em>any</em>> {@link #capabilities(ServiceInstance)}
+ * invocation. It will thus run in line with the heartbeat configuration of the chosen Spring Cloud Discovery
+ * implementation.
  *
  * @author Steven van Beelen
  * @since 4.4
@@ -47,14 +56,22 @@ public class IgnoreListingDiscoveryMode extends AbstractCapabilityDiscoveryMode<
 
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    private final CapabilityDiscoveryMode delegate;
+    /**
+     * {@link Clock} instance used to set the expiry time of ignored {@link ServiceInstance ServiceInstances}. May be
+     * adjusted to use a different timezone, or for testing purposes.
+     */
+    public static Clock clock = Clock.systemUTC();
 
-    private final Set<ServiceInstance> ignoredServices = new HashSet<>();
+    private final CapabilityDiscoveryMode delegate;
+    private final long expireThreshold;
+
+    private final Map<ServiceInstance, Long> ignoredServices = new HashMap<>();
 
     /**
      * Instantiate a {@link Builder} to be able to create a {@link IgnoreListingDiscoveryMode}.
      * <p>
-     * The delegate {@link CapabilityDiscoveryMode} is a <b>hard requirement</b> and as such should be provided.
+     * The {@code expireThreshold} is defaulted to {@code 60000} milliseconds. The delegate {@link
+     * CapabilityDiscoveryMode} is a <b>hard requirement</b> and as such should be provided.
      *
      * @return a {@link Builder} to be able to create a {@link IgnoreListingDiscoveryMode}
      */
@@ -73,6 +90,7 @@ public class IgnoreListingDiscoveryMode extends AbstractCapabilityDiscoveryMode<
     protected IgnoreListingDiscoveryMode(Builder builder) {
         super(builder);
         this.delegate = builder.delegate;
+        this.expireThreshold = builder.expireThreshold;
     }
 
     @Override
@@ -92,7 +110,8 @@ public class IgnoreListingDiscoveryMode extends AbstractCapabilityDiscoveryMode<
         try {
             return delegate.capabilities(serviceInstance);
         } catch (ServiceInstanceClientException e) {
-            ignoredServices.add(serviceInstance);
+            long expiryTime = clock.instant().toEpochMilli() + expireThreshold;
+            ignoredServices.put(serviceInstance, expiryTime);
             logger.info("Added ServiceInstance [{}] under host [{}] and port [{}] to the denied list, "
                                 + "since we could not retrieve the required member capabilities from it.",
                         serviceInstance.getServiceId(), serviceInstance.getHost(), serviceInstance.getPort(), e);
@@ -101,7 +120,21 @@ public class IgnoreListingDiscoveryMode extends AbstractCapabilityDiscoveryMode<
     }
 
     private boolean shouldIgnore(ServiceInstance service) {
-        return ignoredServices.stream().anyMatch(ignoredService -> equals(ignoredService, service));
+        long currentTime = clock.instant().toEpochMilli();
+        boolean shouldIgnore = false;
+        Set<ServiceInstance> expiredInstances = new HashSet<>();
+
+        for (Map.Entry<ServiceInstance, Long> instance : ignoredServices.entrySet()) {
+            if (equals(instance.getKey(), service)) {
+                shouldIgnore = true;
+            }
+            if (instance.getValue() <= currentTime) {
+                expiredInstances.add(instance.getKey());
+            }
+        }
+        expiredInstances.forEach(ignoredServices::remove);
+
+        return shouldIgnore;
     }
 
     /**
@@ -131,11 +164,13 @@ public class IgnoreListingDiscoveryMode extends AbstractCapabilityDiscoveryMode<
     /**
      * Builder class to instantiate a {@link IgnoreListingDiscoveryMode}.
      * <p>
-     * The delegate {@link CapabilityDiscoveryMode} is a <b>hard requirement</b> and as such should be provided.
+     * The {@code expireThreshold} is defaulted to {@code 60000} milliseconds. The delegate {@link
+     * CapabilityDiscoveryMode} is a <b>hard requirement</b> and as such should be provided.
      */
     public static class Builder extends AbstractCapabilityDiscoveryMode.Builder<IgnoreListingDiscoveryMode> {
 
         private CapabilityDiscoveryMode delegate;
+        private long expireThreshold = 60000;
 
         /**
          * Sets the delegate {@link CapabilityDiscoveryMode} used to delegate the {@link #capabilities(ServiceInstance)}
@@ -148,6 +183,21 @@ public class IgnoreListingDiscoveryMode extends AbstractCapabilityDiscoveryMode<
         public Builder delegate(CapabilityDiscoveryMode delegate) {
             assertNonNull(delegate, "The delegate CapabilityDiscovery may not be null or empty");
             this.delegate = delegate;
+            return this;
+        }
+
+        /**
+         * Defines the expiry threshold of ignored {@link ServiceInstance ServiceInstances} in milliseconds. Once the
+         * threshold is met they will automatically be considered again for their {@link MemberCapabilities}. Defaults
+         * to {@code 60000} milliseconds.
+         *
+         * @param expireThreshold The expiry threshold in milliseconds for an ignored {@link ServiceInstance} to be
+         *                        reconsidered.
+         * @return The current Builder instance, for fluent interfacing.
+         */
+        public Builder expireThreshold(long expireThreshold) {
+            assertStrictPositive(expireThreshold, "The expire threshold should be strictly positive");
+            this.expireThreshold = expireThreshold;
             return this;
         }
 
