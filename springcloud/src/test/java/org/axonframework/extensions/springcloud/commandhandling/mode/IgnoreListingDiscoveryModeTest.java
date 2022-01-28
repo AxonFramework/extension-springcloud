@@ -24,6 +24,7 @@ import org.springframework.cloud.client.ServiceInstance;
 
 import java.net.URI;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.Map;
@@ -98,7 +99,7 @@ class IgnoreListingDiscoveryModeTest {
         IgnoreListingDiscoveryMode testSubjectWithCustomExpireThreshold =
                 IgnoreListingDiscoveryMode.builder()
                                           .delegate(delegate)
-                                          .expireThreshold(testExpireThresholdMs)
+                                          .expireThreshold(Duration.ofMillis(testExpireThresholdMs))
                                           .build();
 
         ServiceInstance testInstanceOne = new StubServiceInstance("idOne", "hostOne", 1);
@@ -160,8 +161,8 @@ class IgnoreListingDiscoveryModeTest {
     void testBuildWithNegativeOrZeroExpireThresholdThrowsAxonConfigurationException() {
         IgnoreListingDiscoveryMode.Builder builderTestSubject = IgnoreListingDiscoveryMode.builder();
 
-        assertThrows(AxonConfigurationException.class, () -> builderTestSubject.expireThreshold(-1));
-        assertThrows(AxonConfigurationException.class, () -> builderTestSubject.expireThreshold(0));
+        assertThrows(AxonConfigurationException.class, () -> builderTestSubject.expireThreshold(Duration.ofMinutes(-1)));
+        assertThrows(AxonConfigurationException.class, () -> builderTestSubject.expireThreshold(Duration.ZERO));
     }
 
     private static class StubServiceInstance implements ServiceInstance {

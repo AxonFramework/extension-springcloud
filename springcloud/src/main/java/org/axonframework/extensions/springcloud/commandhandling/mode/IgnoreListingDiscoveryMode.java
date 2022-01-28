@@ -24,6 +24,7 @@ import org.springframework.cloud.client.ServiceInstance;
 
 import java.lang.invoke.MethodHandles;
 import java.time.Clock;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -32,7 +33,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import static org.axonframework.common.BuilderUtils.assertNonNull;
-import static org.axonframework.common.BuilderUtils.assertStrictPositive;
+import static org.axonframework.common.BuilderUtils.assertThat;
 
 /**
  * Wrapper implementation of the {@link CapabilityDiscoveryMode}, delegating all operations to another {@code
@@ -45,9 +46,9 @@ import static org.axonframework.common.BuilderUtils.assertStrictPositive;
  * instance identifiers.
  * <p>
  * Ignored {@code ServiceInstances} are evicted from the list after a configurable {@code expireThreshold} (through the
- * {@link Builder#expireThreshold(long)}. Eviction occurs during <em>any</em>> {@link #capabilities(ServiceInstance)}
- * invocation. It will thus run in line with the heartbeat configuration of the chosen Spring Cloud Discovery
- * implementation.
+ * {@link Builder#expireThreshold(Duration)}). Eviction occurs during <em>any</em>> {@link
+ * #capabilities(ServiceInstance)} invocation. It will thus run in line with the heartbeat configuration of the chosen
+ * Spring Cloud Discovery implementation.
  *
  * @author Steven van Beelen
  * @since 4.4
@@ -63,14 +64,14 @@ public class IgnoreListingDiscoveryMode extends AbstractCapabilityDiscoveryMode<
     public static Clock clock = Clock.systemUTC();
 
     private final CapabilityDiscoveryMode delegate;
-    private final long expireThreshold;
+    private final Duration expireThreshold;
 
     private final Map<ServiceInstance, Long> ignoredServices = new HashMap<>();
 
     /**
      * Instantiate a {@link Builder} to be able to create a {@link IgnoreListingDiscoveryMode}.
      * <p>
-     * The {@code expireThreshold} is defaulted to {@code 60000} milliseconds. The delegate {@link
+     * The {@code expireThreshold} is defaulted to a {@link Duration} of {@code 1} minute. The delegate {@link
      * CapabilityDiscoveryMode} is a <b>hard requirement</b> and as such should be provided.
      *
      * @return a {@link Builder} to be able to create a {@link IgnoreListingDiscoveryMode}
@@ -110,7 +111,7 @@ public class IgnoreListingDiscoveryMode extends AbstractCapabilityDiscoveryMode<
         try {
             return delegate.capabilities(serviceInstance);
         } catch (ServiceInstanceClientException e) {
-            long expiryTime = clock.instant().toEpochMilli() + expireThreshold;
+            long expiryTime = clock.instant().toEpochMilli() + expireThreshold.toMillis();
             ignoredServices.put(serviceInstance, expiryTime);
             logger.info("Added ServiceInstance [{}] under host [{}] and port [{}] to the denied list, "
                                 + "since we could not retrieve the required member capabilities from it.",
@@ -138,8 +139,8 @@ public class IgnoreListingDiscoveryMode extends AbstractCapabilityDiscoveryMode<
     }
 
     /**
-     * Implementation of the {@link org.springframework.cloud.client.ServiceInstance} in some cases do no have an {@code
-     * equals()} implementation. Thus we provide our own {@code equals()} function to match a given {@code
+     * Implementation of the {@link org.springframework.cloud.client.ServiceInstance} in some cases do not have an
+     * {@code equals()} implementation. Thus, we provide our own {@code equals()} function to match a given {@code
      * ignoredInstance} with another given {@code serviceInstance}. The match is done on the service id, host and port.
      *
      * @param serviceInstance A {@link org.springframework.cloud.client.ServiceInstance} to compare with the given
@@ -164,13 +165,13 @@ public class IgnoreListingDiscoveryMode extends AbstractCapabilityDiscoveryMode<
     /**
      * Builder class to instantiate a {@link IgnoreListingDiscoveryMode}.
      * <p>
-     * The {@code expireThreshold} is defaulted to {@code 60000} milliseconds. The delegate {@link
+     * The {@code expireThreshold} is defaulted to a {@link Duration} of {@code 1} minute. The delegate {@link
      * CapabilityDiscoveryMode} is a <b>hard requirement</b> and as such should be provided.
      */
     public static class Builder extends AbstractCapabilityDiscoveryMode.Builder<IgnoreListingDiscoveryMode> {
 
         private CapabilityDiscoveryMode delegate;
-        private long expireThreshold = 60000;
+        private Duration expireThreshold = Duration.ofMinutes(1);
 
         /**
          * Sets the delegate {@link CapabilityDiscoveryMode} used to delegate the {@link #capabilities(ServiceInstance)}
@@ -187,16 +188,17 @@ public class IgnoreListingDiscoveryMode extends AbstractCapabilityDiscoveryMode<
         }
 
         /**
-         * Defines the expiry threshold of ignored {@link ServiceInstance ServiceInstances} in milliseconds. Once the
-         * threshold is met they will automatically be considered again for their {@link MemberCapabilities}. Defaults
-         * to {@code 60000} milliseconds.
+         * Defines the expiry threshold of ignored {@link ServiceInstance ServiceInstances}. Once the threshold is met
+         * they will automatically be considered again for their {@link MemberCapabilities}. Defaults to a {@link
+         * Duration} of one minute.
          *
-         * @param expireThreshold The expiry threshold in milliseconds for an ignored {@link ServiceInstance} to be
-         *                        reconsidered.
+         * @param expireThreshold The expiry threshold for an ignored {@link ServiceInstance} to be reconsidered.
          * @return The current Builder instance, for fluent interfacing.
          */
-        public Builder expireThreshold(long expireThreshold) {
-            assertStrictPositive(expireThreshold, "The expire threshold should be strictly positive");
+        public Builder expireThreshold(Duration expireThreshold) {
+            assertThat(expireThreshold,
+                       threshold -> threshold != null && !threshold.isNegative() && !threshold.isZero(),
+                       "The expire threshold should be strictly positive");
             this.expireThreshold = expireThreshold;
             return this;
         }
