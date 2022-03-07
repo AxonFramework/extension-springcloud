@@ -60,7 +60,7 @@
         <log4j.version>2.17.2</log4j.version>
 
         <mockito.version>4.3.1</mockito.version>
-        <jackson.version>2.13.1</jackson.version>
+        <jackson.version>2.13.2</jackson.version>
         <commons-io.version>2.11.0</commons-io.version>
         <javax.jaxb-api.version>2.3.1</javax.jaxb-api.version>
         <guava-collections.version>r03</guava-collections.version>
