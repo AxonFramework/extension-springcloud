@@ -43,7 +43,7 @@ jobs:
       - name: Sonar Analysis
         if: ${{ success() && matrix.sonar-enabled && github.event.pull_request.head.repo.full_name == github.repository }}
         run: |
-          ./mvnw -B sonar:sonar \          
+          ./mvnw -B sonar:sonar \
           -Dsonar.projectKey=AxonFramework_extension-springcloud \
           -Dsonar.organization=axonframework \
           -Dsonar.host.url=https://sonarcloud.io \
