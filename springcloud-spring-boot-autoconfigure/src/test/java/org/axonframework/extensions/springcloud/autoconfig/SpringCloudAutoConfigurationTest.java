@@ -1,26 +1,11 @@
 /*
- * Copyright (c) 2010-2018. Axon Framework
+ * Copyright (c) 2010-2022. Axon Framework
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * Copyright (c) 2010-2018. Axon Framework
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,15 +23,13 @@ import org.axonframework.commandhandling.distributed.CommandBusConnector;
 import org.axonframework.commandhandling.distributed.CommandRouter;
 import org.axonframework.commandhandling.distributed.DistributedCommandBus;
 import org.axonframework.commandhandling.distributed.RoutingStrategy;
-import org.axonframework.common.ReflectionUtils;
 import org.axonframework.extensions.springcloud.commandhandling.SpringCloudCommandRouter;
 import org.axonframework.extensions.springcloud.commandhandling.SpringHttpCommandBusConnector;
+import org.axonframework.extensions.springcloud.commandhandling.mode.AcceptAllCommandsDiscoveryMode;
 import org.axonframework.extensions.springcloud.commandhandling.mode.CapabilityDiscoveryMode;
 import org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListingDiscoveryMode;
 import org.axonframework.extensions.springcloud.commandhandling.mode.MemberCapabilitiesController;
 import org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabilityDiscoveryMode;
-import org.axonframework.extensions.springcloud.commandhandling.mode.AcceptAllCommandsDiscoveryMode;
-import org.axonframework.springboot.autoconfig.AxonServerAutoConfiguration;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
@@ -85,29 +68,30 @@ class SpringCloudAutoConfigurationTest {
             .withConfiguration(AutoConfigurations.of(Context.class));
 
     @Test
-    void testDefaultSpringCloudAutoConfiguration() {
-        contextRunner.run(context -> {
-            assertThat(context).getBeanNames(RoutingStrategy.class)
-                               .isEmpty();
-            assertThat(context).getBeanNames(RestTemplate.class)
-                               .isEmpty();
-            assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
-                               .isEmpty();
-            assertThat(context).getBeanNames(CommandRouter.class)
-                               .isEmpty();
-            assertThat(context).getBeanNames(CommandBusConnector.class)
-                               .isEmpty();
+    void defaultSpringCloudAutoConfiguration() {
+        contextRunner.withPropertyValues("axon.axonserver.enabled=false")
+                     .run(context -> {
+                         assertThat(context).getBeanNames(RoutingStrategy.class)
+                                            .isEmpty();
+                         assertThat(context).getBeanNames(RestTemplate.class)
+                                            .isEmpty();
+                         assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
+                                            .isEmpty();
+                         assertThat(context).getBeanNames(CommandRouter.class)
+                                            .isEmpty();
+                         assertThat(context).getBeanNames(CommandBusConnector.class)
+                                            .isEmpty();
 
-            assertThat(context).getBeanNames(CommandBus.class)
-                               .hasSize(1);
-            assertThat(context).getBean(CommandBus.class)
-                               .isExactlyInstanceOf(SimpleCommandBus.class);
-        });
+                         assertThat(context).getBeanNames(CommandBus.class)
+                                            .hasSize(1);
+                         assertThat(context).getBean(CommandBus.class)
+                                            .isExactlyInstanceOf(SimpleCommandBus.class);
+                     });
     }
 
     @Test
-    void testEnabledSpringCloudAutoConfiguration() {
-        contextRunner.withPropertyValues("axon.distributed.enabled=true")
+    void enabledSpringCloudAutoConfiguration() {
+        contextRunner.withPropertyValues("axon.distributed.enabled=true", "axon.axonserver.enabled=false")
                      .run(context -> {
                          assertThat(context).getBeanNames(RoutingStrategy.class)
                                             .hasSize(1);
@@ -156,24 +140,11 @@ class SpringCloudAutoConfigurationTest {
     }
 
     @Test
-    void testDisablingIgnoreListingOnlyCreatesRestCapabilityDiscoveryMode() {
-        contextRunner.withPropertyValues(
-                "axon.distributed.enabled=true",
-                "axon.distributed.spring-cloud.enable-ignore-listing=false"
-        ).run(context -> {
-            assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
-                               .hasSize(1);
-            assertThat(context).getBean(CapabilityDiscoveryMode.class)
-                               .isExactlyInstanceOf(RestCapabilityDiscoveryMode.class);
-        });
-    }
-
-    @Test
-    void testDisablingIgnoreListingAndAcceptAllOnlyCreatesRestCapabilityDiscoveryMode() {
+    void disablingIgnoreListingOnlyCreatesRestCapabilityDiscoveryMode() {
         contextRunner.withPropertyValues(
                 "axon.distributed.enabled=true",
                 "axon.distributed.spring-cloud.enable-ignore-listing=false",
-                "axon.distributed.spring-cloud.enable-accept-all-commands=false"
+                "axon.axonserver.enabled=false"
         ).run(context -> {
             assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
                                .hasSize(1);
@@ -183,11 +154,27 @@ class SpringCloudAutoConfigurationTest {
     }
 
     @Test
-    void testEnablingIgnoreListingCreatesTwoCapabilityDiscoveryModeInstances() {
+    void disablingIgnoreListingAndAcceptAllOnlyCreatesRestCapabilityDiscoveryMode() {
+        contextRunner.withPropertyValues(
+                "axon.distributed.enabled=true",
+                "axon.distributed.spring-cloud.enable-ignore-listing=false",
+                "axon.distributed.spring-cloud.enable-accept-all-commands=false",
+                "axon.axonserver.enabled=false"
+        ).run(context -> {
+            assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
+                               .hasSize(1);
+            assertThat(context).getBean(CapabilityDiscoveryMode.class)
+                               .isExactlyInstanceOf(RestCapabilityDiscoveryMode.class);
+        });
+    }
+
+    @Test
+    void enablingIgnoreListingCreatesTwoCapabilityDiscoveryModeInstances() {
         contextRunner.withPropertyValues(
                 "axon.distributed.enabled=true",
                 "axon.distributed.spring-cloud.enable-ignore-listing=true",
-                "axon.distributed.spring-cloud.enable-accept-all-commands=false"
+                "axon.distributed.spring-cloud.enable-accept-all-commands=false",
+                "axon.axonserver.enabled=false"
         ).run(context -> {
             assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
                                .hasSize(2);
@@ -199,11 +186,12 @@ class SpringCloudAutoConfigurationTest {
     }
 
     @Test
-    void testEnablingAcceptAllCreatesTwoCapabilityDiscoveryModeInstances() {
+    void enablingAcceptAllCreatesTwoCapabilityDiscoveryModeInstances() {
         contextRunner.withPropertyValues(
                 "axon.distributed.enabled=true",
                 "axon.distributed.spring-cloud.enable-ignore-listing=false",
-                "axon.distributed.spring-cloud.enable-accept-all-commands=true"
+                "axon.distributed.spring-cloud.enable-accept-all-commands=true",
+                "axon.axonserver.enabled=false"
         ).run(context -> {
             assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
                                .hasSize(2);
@@ -215,11 +203,12 @@ class SpringCloudAutoConfigurationTest {
     }
 
     @Test
-    void testEnablingIgnoreListingAndAcceptAllCreatesTwoCapabilityDiscoveryModeInstances() {
+    void enablingIgnoreListingAndAcceptAllCreatesTwoCapabilityDiscoveryModeInstances() {
         contextRunner.withPropertyValues(
                 "axon.distributed.enabled=true",
                 "axon.distributed.spring-cloud.enable-ignore-listing=True",
-                "axon.distributed.spring-cloud.enable-accept-all-commands=true"
+                "axon.distributed.spring-cloud.enable-accept-all-commands=true",
+                "axon.axonserver.enabled=false"
         ).run(context -> {
             assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
                                .hasSize(2);
@@ -242,8 +231,7 @@ class SpringCloudAutoConfigurationTest {
             JmxAutoConfiguration.class,
             WebClientAutoConfiguration.class,
             HibernateJpaAutoConfiguration.class,
-            DataSourceAutoConfiguration.class,
-            AxonServerAutoConfiguration.class
+            DataSourceAutoConfiguration.class
     })
     public static class Context {
 
