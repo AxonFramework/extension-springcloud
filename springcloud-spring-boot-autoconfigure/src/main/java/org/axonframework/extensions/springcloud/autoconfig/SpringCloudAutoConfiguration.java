@@ -32,6 +32,7 @@ import org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabil
 import org.axonframework.serialization.Serializer;
 import org.axonframework.springboot.autoconfig.InfraConfiguration;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -44,7 +45,6 @@ import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.discovery.simple.SimpleDiscoveryClientAutoConfiguration;
 import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 import org.springframework.web.client.RestTemplate;
 
@@ -55,7 +55,7 @@ import org.springframework.web.client.RestTemplate;
  * @author Steven van Beelen
  * @since 3.0
  */
-@Configuration
+@AutoConfiguration
 @AutoConfigureAfter({
         RoutingStrategyAutoConfiguration.class,
         SimpleDiscoveryClientAutoConfiguration.class
