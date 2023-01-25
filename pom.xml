@@ -19,7 +19,7 @@
 
     <groupId>org.axonframework.extensions.springcloud</groupId>
     <artifactId>axon-springcloud-parent</artifactId>
-    <version>4.6.1-SNAPSHOT</version>
+    <version>4.7.0-SNAPSHOT</version>
     <modules>
         <module>springcloud</module>
         <module>springcloud-spring-boot-autoconfigure</module>
@@ -399,7 +399,15 @@
                 </plugins>
             </build>
         </profile>
-
+        <profile>
+            <id>java17-modules</id>
+            <activation>
+                <jdk>[17,)</jdk>
+            </activation>
+            <modules>
+                <module>springcloud-spring-boot-3-integrationtests</module>
+            </modules>
+        </profile>
     </profiles>
 
     <repositories>
