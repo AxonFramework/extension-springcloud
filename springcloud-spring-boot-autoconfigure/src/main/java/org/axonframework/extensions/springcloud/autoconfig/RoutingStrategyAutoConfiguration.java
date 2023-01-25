@@ -21,11 +21,11 @@ package org.axonframework.extensions.springcloud.autoconfig;
 import org.axonframework.commandhandling.distributed.AnnotationRoutingStrategy;
 import org.axonframework.commandhandling.distributed.RoutingStrategy;
 import org.axonframework.commandhandling.distributed.UnresolvedRoutingKeyPolicy;
+import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * Auto configuration for {@link RoutingStrategy}.
@@ -33,7 +33,7 @@ import org.springframework.context.annotation.Configuration;
  * @author Milan Savic
  * @since 3.1.1
  */
-@Configuration
+@AutoConfiguration
 @AutoConfigureBefore(SpringCloudAutoConfiguration.class)
 @ConditionalOnExpression("${axon.distributed.enabled:false}")
 public class RoutingStrategyAutoConfiguration {
