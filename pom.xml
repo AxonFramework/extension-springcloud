@@ -50,7 +50,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-        <axon.version>4.6.1</axon.version>
+        <axon.version>4.7.0</axon.version>
         <spring-cloud-release.version>2021.0.5</spring-cloud-release.version>
 
         <spring.version>5.3.25</spring.version>
