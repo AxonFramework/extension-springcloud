@@ -135,6 +135,7 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>${jar-plugin.version}</version>
                 <configuration>
@@ -146,6 +147,7 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <source>17</source>
@@ -169,24 +171,39 @@
     <profiles>
         <profile>
             <id>coverage</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>coverage</name>
+                </property>
+            </activation>
             <build>
                 <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>${maven-surefire-plugin.version}</version>
+                        <configuration>
+                            <!--suppress MavenModelInspection -->
+                            <argLine>-Djava.awt.headless=true ${surefireArgLine}</argLine>
+                        </configuration>
+                    </plugin>
+
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
                         <version>${jacoco-plugin.version}</version>
                         <executions>
                             <execution>
+                                <id>prepare-agent-for-unit-tests</id>
+                                <phase>initialize</phase>
                                 <goals>
                                     <goal>prepare-agent</goal>
                                 </goals>
-                            </execution>
-                            <execution>
-                                <id>report</id>
-                                <phase>prepare-package</phase>
-                                <goals>
-                                    <goal>report</goal>
-                                </goals>
+                                <configuration>
+                                    <propertyName>surefireArgLine</propertyName>
+                                    <destFile>${project.build.directory}/jacoco-ut.exec</destFile>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
