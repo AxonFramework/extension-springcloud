@@ -57,9 +57,9 @@ import static org.axonframework.common.BuilderUtils.assertNonNull;
  * A {@link CommandBusConnector} implementation based on Spring Rest characteristics. Serves as a {@link RestController}
  * to receive Command Messages for its node, but also contains a {@link RestOperations} component to send Command
  * Messages to other nodes. Will use a {@code localCommandBus} of type {@link CommandBus} to publish any received
- * Command Messages to its local instance. Messages are de-/serialized using a {@link Serializer}. Lastly, an {@link
- * Executor} is used to make the Command publishing calls asynchronous, by using {@link Executor#execute(Runnable)},
- * providing the usage of the RestOperations within the {@link Runnable}.
+ * Command Messages to its local instance. Messages are de-/serialized using a {@link Serializer}. Lastly, an
+ * {@link Executor} is used to make command handling and dispatching asynchronous, given that the configured
+ * {@code Executor} use different threads or spawns new threads.
  *
  * @author Steven van Beelen
  * @since 3.0
@@ -83,9 +83,9 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
     /**
      * Instantiate a {@link SpringHttpCommandBusConnector} based on the fields contained in the {@link Builder}.
      * <p>
-     * Will assert that the {@code localCommandBus} of type (@link CommandBus}, {@link RestOperations} and {@link
-     * Serializer} are not {@code null}, and will throw an {@link AxonConfigurationException} if any of them is {@code
-     * null}.
+     * Will assert that the {@code localCommandBus} of type (@link CommandBus}, {@link RestOperations} and
+     * {@link Serializer} are not {@code null}, and will throw an {@link AxonConfigurationException} if any of them is
+     * {@code null}.
      *
      * @param builder the {@link Builder} used to instantiate a {@link SpringHttpCommandBusConnector} instance
      */
@@ -152,7 +152,10 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
                         callback.onResult(commandMessage, replyMessage.getCommandResultMessage(serializer));
                     }
                 } catch (Exception e) {
-                    callback.onResult(commandMessage, asCommandResultMessage(new CommandDispatchException("An exception occurred while dispatching a command or its result", e)));
+                    callback.onResult(commandMessage,
+                                      asCommandResultMessage(new CommandDispatchException(
+                                              "An exception occurred while dispatching a command or its result", e
+                                      )));
                 } finally {
                     activityHandle.end();
                 }
@@ -321,12 +324,15 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
         }
 
         /**
-         * Sets the {@link Executor} used to asynchronously perform sending of the command messages to other nodes.
-         * Defaults to a {@link DirectExecutor#INSTANCE}.
+         * Sets the {@link Executor} used to "asynchronously" perform sending of the command messages to other nodes and
+         * handling commands from other nodes. To make sending and handling fully asynchronous, it is recommended to use
+         * an {@code Executor} that use different threads or spawns new threads.
+         * <p>
+         * Defaults to a {@link DirectExecutor#INSTANCE} for backwards compatibility.
          *
-         * @param executor a {@link Executor} used to asynchronously perform sending of the command messages to other
-         *                 nodes
-         * @return the current Builder instance, for fluent interfacing
+         * @param executor A {@link Executor} used to "asynchronously" perform sending of the command messages to other
+         *                 nodes and handling commands from other nodes.
+         * @return The current Builder instance, for fluent interfacing.
          */
         public Builder executor(Executor executor) {
             assertNonNull(executor, "Executor may not be null");
