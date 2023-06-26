@@ -31,6 +31,7 @@ import org.axonframework.extensions.springcloud.commandhandling.mode.MemberCapab
 import org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabilityDiscoveryMode;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.springboot.autoconfig.InfraConfiguration;
+import org.axonframework.tracing.SpanFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
@@ -49,8 +50,8 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.web.client.RestTemplate;
 
 /**
- * Auto configuration class for the defining a {@link SpringCloudCommandRouter} and {@link
- * SpringHttpCommandBusConnector} to be used in a {@link DistributedCommandBus}.
+ * Autoconfiguration class for the defining a {@link SpringCloudCommandRouter} and {@link SpringHttpCommandBusConnector}
+ * to be used in a {@link DistributedCommandBus}.
  *
  * @author Steven van Beelen
  * @since 3.0
@@ -125,7 +126,6 @@ public class SpringCloudAutoConfiguration {
         return decoratedDiscoveryMode;
     }
 
-    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnBean(DiscoveryClient.class)
@@ -143,16 +143,17 @@ public class SpringCloudAutoConfiguration {
                                        .build();
     }
 
-    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Bean
     @ConditionalOnMissingBean(CommandBusConnector.class)
     public CommandBusConnector springHttpCommandBusConnector(@Qualifier("localSegment") CommandBus localSegment,
                                                              RestTemplate restTemplate,
-                                                             @Qualifier("messageSerializer") Serializer serializer) {
+                                                             @Qualifier("messageSerializer") Serializer serializer,
+                                                             SpanFactory spanFactory) {
         return SpringHttpCommandBusConnector.builder()
                                             .localCommandBus(localSegment)
                                             .restOperations(restTemplate)
                                             .serializer(serializer)
+                                            .spanFactory(spanFactory)
                                             .build();
     }
 
@@ -161,10 +162,16 @@ public class SpringCloudAutoConfiguration {
     @ConditionalOnBean(CommandBusConnector.class)
     @ConditionalOnMissingBean
     public DistributedCommandBus distributedCommandBus(CommandRouter commandRouter,
-                                                       CommandBusConnector commandBusConnector) {
+                                                       CommandBusConnector commandBusConnector,
+                                                       org.axonframework.config.Configuration configuration,
+                                                       SpanFactory spanFactory) {
         DistributedCommandBus commandBus = DistributedCommandBus.builder()
                                                                 .commandRouter(commandRouter)
                                                                 .connector(commandBusConnector)
+                                                                .messageMonitor(configuration.messageMonitor(
+                                                                        DistributedCommandBus.class, "commandBus"
+                                                                ))
+                                                                .spanFactory(spanFactory)
                                                                 .build();
         commandBus.updateLoadFactor(properties.getLoadFactor());
         return commandBus;
