@@ -32,6 +32,9 @@ import org.axonframework.lifecycle.StartHandler;
 import org.axonframework.messaging.MessageHandler;
 import org.axonframework.messaging.MessageHandlerInterceptor;
 import org.axonframework.serialization.Serializer;
+import org.axonframework.tracing.NoOpSpanFactory;
+import org.axonframework.tracing.Span;
+import org.axonframework.tracing.SpanFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
@@ -78,6 +81,8 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
     private final RestOperations restOperations;
     private final Serializer serializer;
     private final Executor executor;
+    private final SpanFactory spanFactory;
+
     private final ShutdownLatch shutdownLatch = new ShutdownLatch();
 
     /**
@@ -95,6 +100,7 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
         this.restOperations = builder.restOperations;
         this.serializer = builder.serializer;
         this.executor = builder.executor;
+        this.spanFactory = builder.spanFactory;
     }
 
     /**
@@ -108,9 +114,9 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
     /**
      * Instantiate a Builder to be able to create a {@link SpringHttpCommandBusConnector}.
      * <p>
-     * The {@link Executor} is defaulted to a {@link DirectExecutor#INSTANCE}. The {@code localCommandBus} of type
-     * (@link CommandBus}, {@link RestOperations} and {@link Serializer} are
-     * <b>hard requirements</b> and as such should be provided.
+     * The {@link Executor} is defaulted to a {@link DirectExecutor#INSTANCE} and the {@link SpanFactory} to a
+     * {@link NoOpSpanFactory} instance. The {@code localCommandBus} of type (@link CommandBus}, the
+     * {@link RestOperations} and the {@link Serializer} are <b>hard requirements</b> and as such should be provided.
      *
      * @return a Builder to be able to create a {@link SpringHttpCommandBusConnector}
      */
@@ -226,24 +232,27 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
     @PostMapping("/command")
     public <C, R> CompletableFuture<?> receiveCommand(@RequestBody SpringHttpDispatchMessage<C> dispatchMessage) {
         CommandMessage<C> commandMessage = dispatchMessage.getCommandMessage(serializer);
-        if (dispatchMessage.isExpectReply()) {
-            try {
-                SpringHttpReplyFutureCallback<C, R> replyFutureCallback = new SpringHttpReplyFutureCallback<>();
-                localCommandBus.dispatch(commandMessage, replyFutureCallback);
-                return replyFutureCallback;
-            } catch (Exception e) {
-                logger.error("Could not dispatch command", e);
-                return CompletableFuture.completedFuture(createReply(commandMessage, asCommandResultMessage(e)));
+        Span span = spanFactory.createChildHandlerSpan(() -> "SpringHttpCommandBusConnector.handle", commandMessage);
+        return span.runSupplier(() -> {
+            if (dispatchMessage.isExpectReply()) {
+                try {
+                    SpringHttpReplyFutureCallback<C, R> replyFutureCallback = new SpringHttpReplyFutureCallback<>();
+                    localCommandBus.dispatch(commandMessage, replyFutureCallback);
+                    return replyFutureCallback;
+                } catch (Exception e) {
+                    logger.error("Could not dispatch command", e);
+                    return CompletableFuture.completedFuture(createReply(commandMessage, asCommandResultMessage(e)));
+                }
+            } else {
+                try {
+                    localCommandBus.dispatch(commandMessage);
+                    return CompletableFuture.completedFuture("");
+                } catch (Exception e) {
+                    logger.error("Could not dispatch command", e);
+                    return CompletableFuture.completedFuture(createReply(commandMessage, asCommandResultMessage(e)));
+                }
             }
-        } else {
-            try {
-                localCommandBus.dispatch(commandMessage);
-                return CompletableFuture.completedFuture("");
-            } catch (Exception e) {
-                logger.error("Could not dispatch command", e);
-                return CompletableFuture.completedFuture(createReply(commandMessage, asCommandResultMessage(e)));
-            }
-        }
+        });
     }
 
     private SpringHttpReplyMessage<?> createReply(CommandMessage<?> commandMessage,
@@ -258,7 +267,8 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
 
     @Override
     public Registration registerHandlerInterceptor(
-            MessageHandlerInterceptor<? super CommandMessage<?>> handlerInterceptor) {
+            MessageHandlerInterceptor<? super CommandMessage<?>> handlerInterceptor
+    ) {
         return localCommandBus.registerHandlerInterceptor(handlerInterceptor);
     }
 
@@ -275,9 +285,9 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
     /**
      * Builder class to instantiate a {@link SpringHttpCommandBusConnector}.
      * <p>
-     * The {@link Executor} is defaulted to a {@link DirectExecutor#INSTANCE}. The {@code localCommandBus} of type
-     * (@link CommandBus}, {@link RestOperations} and {@link Serializer} are
-     * <b>hard requirements</b> and as such should be provided.
+     * The {@link Executor} is defaulted to a {@link DirectExecutor#INSTANCE} and the {@link SpanFactory} to a
+     * {@link NoOpSpanFactory} instance. The {@code localCommandBus} of type (@link CommandBus}, the
+     * {@link RestOperations} and the {@link Serializer} are <b>hard requirements</b> and as such should be provided.
      */
     public static class Builder {
 
@@ -285,6 +295,7 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
         private RestOperations restOperations;
         private Serializer serializer;
         private Executor executor = DirectExecutor.INSTANCE;
+        private SpanFactory spanFactory = NoOpSpanFactory.INSTANCE;
 
         /**
          * Sets the {@code localCommandBus} of type {@link CommandBus} to publish received commands which to the local
@@ -337,6 +348,19 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
         public Builder executor(Executor executor) {
             assertNonNull(executor, "Executor may not be null");
             this.executor = executor;
+            return this;
+        }
+
+        /**
+         * Sets the {@link SpanFactory} used to attach span information from incoming commands. Defaults to a
+         * {@link NoOpSpanFactory} instance.
+         *
+         * @param spanFactory The {@link SpanFactory} used to attach span information from incoming commands.
+         * @return The current Builder instance, for fluent interfacing.
+         */
+        public Builder spanFactory(SpanFactory spanFactory) {
+            assertNonNull(spanFactory, "SpanFactory may not be null");
+            this.spanFactory = spanFactory;
             return this;
         }
 
