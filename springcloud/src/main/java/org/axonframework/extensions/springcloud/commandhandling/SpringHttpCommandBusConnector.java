@@ -53,6 +53,8 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
+import javax.annotation.Nonnull;
+
 import static org.axonframework.commandhandling.GenericCommandResultMessage.asCommandResultMessage;
 import static org.axonframework.common.BuilderUtils.assertNonNull;
 
@@ -125,7 +127,7 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
     }
 
     @Override
-    public <C> void send(Member destination, CommandMessage<? extends C> commandMessage) {
+    public <C> void send(Member destination, @Nonnull CommandMessage<? extends C> commandMessage) {
         shutdownLatch.ifShuttingDown("JGroupsConnector is shutting down, no new commands will be sent.");
         if (destination.local()) {
             localCommandBus.dispatch(commandMessage);
@@ -136,9 +138,10 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
 
     @Override
     public <C, R> void send(Member destination,
-                            CommandMessage<C> commandMessage,
-                            CommandCallback<? super C, R> callback) {
+                            @Nonnull CommandMessage<C> commandMessage,
+                            @Nonnull CommandCallback<? super C, R> callback) {
         shutdownLatch.ifShuttingDown("SpringHttpCommandBusConnector is shutting down, no new commands will be sent.");
+        //noinspection resource
         ShutdownLatch.ActivityHandle activityHandle = shutdownLatch.registerActivity();
         if (destination.local()) {
             CommandCallback<C, R> wrapper = (cm, crm) -> {
@@ -220,7 +223,8 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
     }
 
     @Override
-    public Registration subscribe(String commandName, MessageHandler<? super CommandMessage<?>> handler) {
+    public Registration subscribe(@Nonnull String commandName,
+                                  @Nonnull MessageHandler<? super CommandMessage<?>> handler) {
         return localCommandBus.subscribe(commandName, handler);
     }
 
@@ -267,7 +271,7 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
 
     @Override
     public Registration registerHandlerInterceptor(
-            MessageHandlerInterceptor<? super CommandMessage<?>> handlerInterceptor
+            @Nonnull MessageHandlerInterceptor<? super CommandMessage<?>> handlerInterceptor
     ) {
         return localCommandBus.registerHandlerInterceptor(handlerInterceptor);
     }
@@ -277,8 +281,8 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
 
         @Override
         public void onResult(CommandMessage<? extends C> commandMessage,
-                             CommandResultMessage<? extends R> commandResultMessage) {
-            super.complete(createReply(commandMessage, commandResultMessage));
+                             @Nonnull CommandResultMessage<? extends R> commandResultMessage) {
+            super.complete(createReply(commandMessage.getIdentifier(), commandResultMessage));
         }
     }
 
