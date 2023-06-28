@@ -35,6 +35,7 @@ import org.axonframework.messaging.RemoteHandlingException;
 import org.axonframework.serialization.SerializedObject;
 import org.axonframework.serialization.Serializer;
 import org.axonframework.serialization.json.JacksonSerializer;
+import org.axonframework.tracing.TestSpanFactory;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
 import org.mockito.*;
@@ -48,6 +49,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.URI;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -79,12 +81,15 @@ class SpringHttpCommandBusConnectorTest {
     private static final Exception COMMAND_EXECUTION_ERROR =
             new CommandExecutionException("oops", new RuntimeException("Stub"), "details");
 
+    private static final boolean EXPECT_REPLY = true;
+
     private SpringHttpCommandBusConnector testSubject;
 
     private CommandBus localCommandBus;
     private RestTemplate restTemplate;
     private Serializer serializer;
     private Executor executor = new TestExecutor();
+    private TestSpanFactory spanFactory;
 
     private URI expectedUri;
     @Mock
@@ -94,7 +99,7 @@ class SpringHttpCommandBusConnectorTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        serializer = spy(JacksonSerializer.builder().build());
+        serializer = spy(JacksonSerializer.defaultSerializer());
         expectedUri = new URI(ENDPOINT.getScheme(),
                               ENDPOINT.getUserInfo(),
                               ENDPOINT.getHost(),
@@ -106,12 +111,14 @@ class SpringHttpCommandBusConnectorTest {
         localCommandBus = mock(CommandBus.class);
         restTemplate = mock(RestTemplate.class);
         executor = spy(new TestExecutor());
+        spanFactory = new TestSpanFactory();
 
         testSubject = SpringHttpCommandBusConnector.builder()
                                                    .localCommandBus(localCommandBus)
                                                    .restOperations(restTemplate)
                                                    .serializer(serializer)
                                                    .executor(executor)
+                                                   .spanFactory(spanFactory)
                                                    .build();
         testSubject.start();
     }
@@ -195,7 +202,7 @@ class SpringHttpCommandBusConnectorTest {
         verify(serializer).serialize(COMMAND_MESSAGE.getPayload(), byte[].class);
 
         HttpEntity<SpringHttpDispatchMessage<String>> expectedHttpEntity =
-                new HttpEntity<>(buildDispatchMessage(true));
+                new HttpEntity<>(buildDispatchMessage(EXPECT_REPLY));
         verify(restTemplate).exchange(eq(expectedUri), eq(HttpMethod.POST), eq(expectedHttpEntity),
                                       argThat(new ParameterizedTypeReferenceMatcher<>()));
 
@@ -256,7 +263,8 @@ class SpringHttpCommandBusConnectorTest {
         verify(serializer).serialize(COMMAND_MESSAGE.getMetaData(), byte[].class);
         verify(serializer).serialize(COMMAND_MESSAGE.getPayload(), byte[].class);
 
-        HttpEntity<SpringHttpDispatchMessage<String>> expectedHttpEntity = new HttpEntity<>(buildDispatchMessage(true));
+        HttpEntity<SpringHttpDispatchMessage<String>> expectedHttpEntity =
+                new HttpEntity<>(buildDispatchMessage(EXPECT_REPLY));
         verify(restTemplate).exchange(eq(expectedUri), eq(HttpMethod.POST), eq(expectedHttpEntity),
                                       argThat(new ParameterizedTypeReferenceMatcher<>()));
         SerializedObject<byte[]> serializedObject =
@@ -302,7 +310,8 @@ class SpringHttpCommandBusConnectorTest {
         verify(serializer).serialize(COMMAND_MESSAGE.getMetaData(), byte[].class);
         verify(serializer).serialize(COMMAND_MESSAGE.getPayload(), byte[].class);
 
-        HttpEntity<SpringHttpDispatchMessage<String>> expectedHttpEntity = new HttpEntity<>(buildDispatchMessage(true));
+        HttpEntity<SpringHttpDispatchMessage<String>> expectedHttpEntity =
+                new HttpEntity<>(buildDispatchMessage(EXPECT_REPLY));
         verify(restTemplate).exchange(eq(expectedUri), eq(HttpMethod.POST), eq(expectedHttpEntity),
                                       argThat(new ParameterizedTypeReferenceMatcher<>()));
 
@@ -345,7 +354,7 @@ class SpringHttpCommandBusConnectorTest {
         }).when(localCommandBus).dispatch(any(), any());
 
         SpringHttpReplyMessage<String> result =
-                (SpringHttpReplyMessage<String>) testSubject.receiveCommand(buildDispatchMessage(true)).get();
+                (SpringHttpReplyMessage<String>) testSubject.receiveCommand(buildDispatchMessage(EXPECT_REPLY)).get();
 
         assertEquals(COMMAND_MESSAGE.getIdentifier(), result.getCommandIdentifier());
         CommandResultMessage<String> commandResultMessage = result.getCommandResultMessage(serializer);
@@ -357,7 +366,51 @@ class SpringHttpCommandBusConnectorTest {
     }
 
     @Test
-    void testReceiveCommandHandlesCommandWithCallbackSucceedsAndCallsFailure() throws Exception {
+    void receiveCommandRepliesWithRemoteHandlerExceptionOnDeserializingCommand()
+            throws ExecutionException, InterruptedException {
+        String testExceptionMessage = "serialization failure";
+        SpringHttpDispatchMessage<Object> testMessage = buildDispatchMessage(EXPECT_REPLY);
+        Serializer workingSerializer = JacksonSerializer.defaultSerializer();
+
+        doThrow(new RuntimeException(testExceptionMessage)).when(serializer).deserialize(any());
+
+        //noinspection unchecked
+        SpringHttpReplyMessage<String> result =
+                (SpringHttpReplyMessage<String>) testSubject.receiveCommand(testMessage).get();
+
+        CommandResultMessage<String> commandResultMessage = result.getCommandResultMessage(workingSerializer);
+        assertEquals("UNKNOWN", result.getCommandIdentifier());
+        assertTrue(commandResultMessage.isExceptional());
+        assertFalse(commandResultMessage.exceptionDetails().isPresent());
+        assertEquals(
+                "The remote handler threw an exception",
+                commandResultMessage.exceptionResult().getMessage()
+        );
+        assertTrue(commandResultMessage.exceptionResult().getCause().getMessage().contains(testExceptionMessage));
+
+        spanFactory.verifyNoSpan("SpringHttpCommandBusConnector.handle");
+    }
+
+    @Test
+    void receiveCommandRepliesWithSerializationExceptionOnDeserializingCommand() {
+        String testExceptionMessage = "serialization failure";
+        SpringHttpDispatchMessage<Object> testMessage = buildDispatchMessage(false);
+
+        doThrow(new RuntimeException(testExceptionMessage)).when(serializer).deserialize(any());
+
+        CompletableFuture<?> result = testSubject.receiveCommand(testMessage);
+        assertTrue(result.isCompletedExceptionally());
+        try {
+            result.get();
+        } catch (Exception e) {
+            assertTrue(e.getMessage().contains(testExceptionMessage));
+        }
+
+        spanFactory.verifyNoSpan("SpringHttpCommandBusConnector.handle");
+    }
+
+    @Test
+    void receiveCommandHandlesCommandWithCallbackSucceedsAndCallsFailure() throws Exception {
         doAnswer(a -> {
             //noinspection unchecked
             SpringHttpCommandBusConnector.SpringHttpReplyFutureCallback<String, String> callback =
@@ -368,7 +421,7 @@ class SpringHttpCommandBusConnectorTest {
 
         //noinspection unchecked
         SpringHttpReplyMessage<String> result =
-                (SpringHttpReplyMessage<String>) testSubject.receiveCommand(buildDispatchMessage(true)).get();
+                (SpringHttpReplyMessage<String>) testSubject.receiveCommand(buildDispatchMessage(EXPECT_REPLY)).get();
 
         CommandResultMessage<String> commandResultMessage = result.getCommandResultMessage(serializer);
         assertEquals(COMMAND_MESSAGE.getIdentifier(), result.getCommandIdentifier());
@@ -388,34 +441,38 @@ class SpringHttpCommandBusConnectorTest {
         );
 
         verify(localCommandBus).dispatch(any(), any());
+        spanFactory.verifySpanCompleted("SpringHttpCommandBusConnector.handle");
     }
 
     @Test
-    void testReceiveCommandHandlesCommandWithCallbackFails() throws Exception {
+    void receiveCommandHandlesCommandWithCallbackFails() throws Exception {
         doThrow(RuntimeException.class).when(localCommandBus).dispatch(any(), any());
 
         //noinspection unchecked
         SpringHttpReplyMessage<String> result =
-                (SpringHttpReplyMessage<String>) testSubject.receiveCommand(buildDispatchMessage(true)).get();
+                (SpringHttpReplyMessage<String>) testSubject.receiveCommand(buildDispatchMessage(EXPECT_REPLY)).get();
 
         CommandResultMessage<String> commandResultMessage = result.getCommandResultMessage(serializer);
         assertEquals(COMMAND_MESSAGE.getIdentifier(), result.getCommandIdentifier());
         assertTrue(commandResultMessage.isExceptional());
 
         verify(localCommandBus).dispatch(any(), any());
+        spanFactory.verifySpanCompleted("SpringHttpCommandBusConnector.handle");
+        spanFactory.verifySpanHasException("SpringHttpCommandBusConnector.handle", RuntimeException.class);
     }
 
     @Test
-    void testReceiveCommandHandlesCommandWithoutCallback() throws Exception {
+    void receiveCommandHandlesCommandWithoutCallback() throws Exception {
         String result = (String) testSubject.receiveCommand(buildDispatchMessage(false)).get();
 
         assertEquals("", result);
 
         verify(localCommandBus).dispatch(any());
+        spanFactory.verifySpanCompleted("SpringHttpCommandBusConnector.handle");
     }
 
     @Test
-    void testReceiveCommandHandlesCommandWithoutCallbackThrowsException() throws Exception {
+    void receiveCommandHandlesCommandWithoutCallbackThrowsException() throws Exception {
         doThrow(RuntimeException.class).when(localCommandBus).dispatch(any());
 
         //noinspection unchecked
@@ -427,6 +484,8 @@ class SpringHttpCommandBusConnectorTest {
         assertTrue(commandResultMessage.isExceptional());
 
         verify(localCommandBus).dispatch(any());
+        spanFactory.verifySpanCompleted("SpringHttpCommandBusConnector.handle");
+        spanFactory.verifySpanHasException("SpringHttpCommandBusConnector.handle", RuntimeException.class);
     }
 
     @Test

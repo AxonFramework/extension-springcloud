@@ -32,7 +32,6 @@ import org.axonframework.extensions.springcloud.commandhandling.mode.MemberCapab
 import org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabilityDiscoveryMode;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.*;
-import org.springframework.boot.autoconfigure.AutoConfigurations;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jmx.JmxAutoConfiguration;
@@ -64,87 +63,90 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(SpringExtension.class)
 class SpringCloudAutoConfigurationTest {
 
-    private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-            .withConfiguration(AutoConfigurations.of(Context.class));
+    private ApplicationContextRunner testApplicationContext;
+
+    @BeforeEach
+    void setUp() {
+        testApplicationContext = new ApplicationContextRunner().withUserConfiguration(TestContext.class)
+                                                               .withPropertyValues("axon.axonserver.enabled=false");
+    }
 
     @Test
     void defaultSpringCloudAutoConfiguration() {
-        contextRunner.withPropertyValues("axon.axonserver.enabled=false")
-                     .run(context -> {
-                         assertThat(context).getBeanNames(RoutingStrategy.class)
-                                            .isEmpty();
-                         assertThat(context).getBeanNames(RestTemplate.class)
-                                            .isEmpty();
-                         assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
-                                            .isEmpty();
-                         assertThat(context).getBeanNames(CommandRouter.class)
-                                            .isEmpty();
-                         assertThat(context).getBeanNames(CommandBusConnector.class)
-                                            .isEmpty();
+        testApplicationContext.run(context -> {
+            assertThat(context).getBeanNames(RoutingStrategy.class)
+                               .isEmpty();
+            assertThat(context).getBeanNames(RestTemplate.class)
+                               .isEmpty();
+            assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
+                               .isEmpty();
+            assertThat(context).getBeanNames(CommandRouter.class)
+                               .isEmpty();
+            assertThat(context).getBeanNames(CommandBusConnector.class)
+                               .isEmpty();
 
-                         assertThat(context).getBeanNames(CommandBus.class)
-                                            .hasSize(1);
-                         assertThat(context).getBean(CommandBus.class)
-                                            .isExactlyInstanceOf(SimpleCommandBus.class);
-                     });
+            assertThat(context).getBeanNames(CommandBus.class)
+                               .hasSize(1);
+            assertThat(context).getBean(CommandBus.class)
+                               .isExactlyInstanceOf(SimpleCommandBus.class);
+        });
     }
 
     @Test
     void enabledSpringCloudAutoConfiguration() {
-        contextRunner.withPropertyValues("axon.distributed.enabled=true", "axon.axonserver.enabled=false")
-                     .run(context -> {
-                         assertThat(context).getBeanNames(RoutingStrategy.class)
-                                            .hasSize(1);
-                         assertThat(context).getBean(RoutingStrategy.class)
-                                            .isExactlyInstanceOf(AnnotationRoutingStrategy.class);
+        testApplicationContext.withPropertyValues("axon.distributed.enabled=true").run(context -> {
+            assertThat(context).getBeanNames(RoutingStrategy.class)
+                               .hasSize(1);
+            assertThat(context).getBean(RoutingStrategy.class)
+                               .isExactlyInstanceOf(AnnotationRoutingStrategy.class);
 
-                         assertThat(context).getBeanNames(RestTemplate.class)
-                                            .hasSize(1);
-                         assertThat(context).getBean(RestTemplate.class)
-                                            .isExactlyInstanceOf(RestTemplate.class);
+            assertThat(context).getBeanNames(RestTemplate.class)
+                               .hasSize(1);
+            assertThat(context).getBean(RestTemplate.class)
+                               .isExactlyInstanceOf(RestTemplate.class);
 
-                         assertThat(context).getBeanNames(RestCapabilityDiscoveryMode.class)
-                                            .hasSize(1);
-                         assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
-                                            .hasSize(2);
-                         assertThat(context).getBean(CapabilityDiscoveryMode.class)
-                                            .isExactlyInstanceOf(IgnoreListingDiscoveryMode.class);
-                         assertThat(context).getBean("restCapabilityDiscoveryMode", CapabilityDiscoveryMode.class)
-                                            .isExactlyInstanceOf(RestCapabilityDiscoveryMode.class);
+            assertThat(context).getBeanNames(RestCapabilityDiscoveryMode.class)
+                               .hasSize(1);
+            assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
+                               .hasSize(2);
+            assertThat(context).getBean(CapabilityDiscoveryMode.class)
+                               .isExactlyInstanceOf(IgnoreListingDiscoveryMode.class);
+            assertThat(context).getBean("restCapabilityDiscoveryMode",
+                                        CapabilityDiscoveryMode.class)
+                               .isExactlyInstanceOf(RestCapabilityDiscoveryMode.class);
 
-                         assertThat(context).getBeanNames(MemberCapabilitiesController.class)
-                                            .hasSize(1);
-                         assertThat(context).getBean(MemberCapabilitiesController.class)
-                                            .isExactlyInstanceOf(MemberCapabilitiesController.class);
+            assertThat(context).getBeanNames(MemberCapabilitiesController.class)
+                               .hasSize(1);
+            assertThat(context).getBean(MemberCapabilitiesController.class)
+                               .isExactlyInstanceOf(MemberCapabilitiesController.class);
 
-                         assertThat(context).getBeanNames(CommandRouter.class)
-                                            .hasSize(1);
-                         assertThat(context).getBean(CommandRouter.class)
-                                            .isExactlyInstanceOf(SpringCloudCommandRouter.class);
+            assertThat(context).getBeanNames(CommandRouter.class)
+                               .hasSize(1);
+            assertThat(context).getBean(CommandRouter.class)
+                               .isExactlyInstanceOf(SpringCloudCommandRouter.class);
 
-                         assertThat(context).getBeanNames(CommandBusConnector.class)
-                                            .hasSize(1);
-                         assertThat(context).getBean(CommandBusConnector.class)
-                                            .isExactlyInstanceOf(SpringHttpCommandBusConnector.class);
+            assertThat(context).getBeanNames(CommandBusConnector.class)
+                               .hasSize(1);
+            assertThat(context).getBean(CommandBusConnector.class)
+                               .isExactlyInstanceOf(SpringHttpCommandBusConnector.class);
 
-                         assertThat(context).getBeanNames(CommandBus.class)
-                                            .hasSize(2);
+            assertThat(context).getBeanNames(CommandBus.class)
+                               .hasSize(2);
 
-                         Map<String, CommandBus> commandBuses = context.getBeansOfType(CommandBus.class);
-                         CommandBus localSegment = commandBuses.get("commandBus");
-                         assertEquals(SimpleCommandBus.class, localSegment.getClass());
-                         CommandBus distributedCommandBus = commandBuses.get("distributedCommandBus");
-                         assertEquals(DistributedCommandBus.class, distributedCommandBus.getClass());
-                         assertNotEquals(localSegment, distributedCommandBus);
-                     });
+            Map<String, CommandBus> commandBuses = context.getBeansOfType(CommandBus.class);
+            CommandBus localSegment = commandBuses.get("commandBus");
+            assertEquals(SimpleCommandBus.class, localSegment.getClass());
+            CommandBus distributedCommandBus = commandBuses.get("distributedCommandBus");
+            assertEquals(DistributedCommandBus.class, distributedCommandBus.getClass());
+            assertNotEquals(localSegment, distributedCommandBus);
+        });
     }
 
     @Test
     void disablingIgnoreListingOnlyCreatesRestCapabilityDiscoveryMode() {
-        contextRunner.withPropertyValues(
+        testApplicationContext.withPropertyValues(
                 "axon.distributed.enabled=true",
-                "axon.distributed.spring-cloud.enable-ignore-listing=false",
-                "axon.axonserver.enabled=false"
+                "axon.distributed.spring-cloud.enable-ignore-listing=false"
         ).run(context -> {
             assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
                                .hasSize(1);
@@ -155,11 +157,10 @@ class SpringCloudAutoConfigurationTest {
 
     @Test
     void disablingIgnoreListingAndAcceptAllOnlyCreatesRestCapabilityDiscoveryMode() {
-        contextRunner.withPropertyValues(
+        testApplicationContext.withPropertyValues(
                 "axon.distributed.enabled=true",
                 "axon.distributed.spring-cloud.enable-ignore-listing=false",
-                "axon.distributed.spring-cloud.enable-accept-all-commands=false",
-                "axon.axonserver.enabled=false"
+                "axon.distributed.spring-cloud.enable-accept-all-commands=false"
         ).run(context -> {
             assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
                                .hasSize(1);
@@ -170,11 +171,10 @@ class SpringCloudAutoConfigurationTest {
 
     @Test
     void enablingIgnoreListingCreatesTwoCapabilityDiscoveryModeInstances() {
-        contextRunner.withPropertyValues(
+        testApplicationContext.withPropertyValues(
                 "axon.distributed.enabled=true",
                 "axon.distributed.spring-cloud.enable-ignore-listing=true",
-                "axon.distributed.spring-cloud.enable-accept-all-commands=false",
-                "axon.axonserver.enabled=false"
+                "axon.distributed.spring-cloud.enable-accept-all-commands=false"
         ).run(context -> {
             assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
                                .hasSize(2);
@@ -187,11 +187,10 @@ class SpringCloudAutoConfigurationTest {
 
     @Test
     void enablingAcceptAllCreatesTwoCapabilityDiscoveryModeInstances() {
-        contextRunner.withPropertyValues(
+        testApplicationContext.withPropertyValues(
                 "axon.distributed.enabled=true",
                 "axon.distributed.spring-cloud.enable-ignore-listing=false",
-                "axon.distributed.spring-cloud.enable-accept-all-commands=true",
-                "axon.axonserver.enabled=false"
+                "axon.distributed.spring-cloud.enable-accept-all-commands=true"
         ).run(context -> {
             assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
                                .hasSize(2);
@@ -204,11 +203,10 @@ class SpringCloudAutoConfigurationTest {
 
     @Test
     void enablingIgnoreListingAndAcceptAllCreatesTwoCapabilityDiscoveryModeInstances() {
-        contextRunner.withPropertyValues(
+        testApplicationContext.withPropertyValues(
                 "axon.distributed.enabled=true",
                 "axon.distributed.spring-cloud.enable-ignore-listing=True",
-                "axon.distributed.spring-cloud.enable-accept-all-commands=true",
-                "axon.axonserver.enabled=false"
+                "axon.distributed.spring-cloud.enable-accept-all-commands=true"
         ).run(context -> {
             assertThat(context).getBeanNames(CapabilityDiscoveryMode.class)
                                .hasSize(2);
@@ -233,7 +231,7 @@ class SpringCloudAutoConfigurationTest {
             HibernateJpaAutoConfiguration.class,
             DataSourceAutoConfiguration.class
     })
-    public static class Context {
+    public static class TestContext {
 
         @Bean
         public DiscoveryClient discoveryClient() {
