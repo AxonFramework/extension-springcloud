@@ -235,7 +235,16 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
 
     @PostMapping("/command")
     public <C, R> CompletableFuture<?> receiveCommand(@RequestBody SpringHttpDispatchMessage<C> dispatchMessage) {
-        CommandMessage<C> commandMessage = dispatchMessage.getCommandMessage(serializer);
+        CommandMessage<C> commandMessage;
+        try {
+            commandMessage = dispatchMessage.getCommandMessage(serializer);
+        } catch (Exception e) {
+            logger.error("Could not dispatch command", e);
+            return dispatchMessage.isExpectReply()
+                    ? CompletableFuture.completedFuture(createReply("UNKNOWN", asCommandResultMessage(e)))
+                    : exceptionallyCompleted(e);
+        }
+
         Span span = spanFactory.createChildHandlerSpan(() -> "SpringHttpCommandBusConnector.handle", commandMessage);
         return span.runSupplier(() -> {
             if (dispatchMessage.isExpectReply()) {
@@ -245,7 +254,10 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
                     return replyFutureCallback;
                 } catch (Exception e) {
                     logger.error("Could not dispatch command", e);
-                    return CompletableFuture.completedFuture(createReply(commandMessage, asCommandResultMessage(e)));
+                    span.recordException(e);
+                    return CompletableFuture.completedFuture(
+                            createReply(commandMessage.getIdentifier(), asCommandResultMessage(e))
+                    );
                 }
             } else {
                 try {
@@ -253,20 +265,29 @@ public class SpringHttpCommandBusConnector implements CommandBusConnector {
                     return CompletableFuture.completedFuture("");
                 } catch (Exception e) {
                     logger.error("Could not dispatch command", e);
-                    return CompletableFuture.completedFuture(createReply(commandMessage, asCommandResultMessage(e)));
+                    span.recordException(e);
+                    return CompletableFuture.completedFuture(
+                            createReply(commandMessage.getIdentifier(), asCommandResultMessage(e))
+                    );
                 }
             }
         });
     }
 
-    private SpringHttpReplyMessage<?> createReply(CommandMessage<?> commandMessage,
+    private SpringHttpReplyMessage<?> createReply(String commandIdentifier,
                                                   CommandResultMessage<?> commandResultMessage) {
         try {
-            return new SpringHttpReplyMessage<>(commandMessage.getIdentifier(), commandResultMessage, serializer);
+            return new SpringHttpReplyMessage<>(commandIdentifier, commandResultMessage, serializer);
         } catch (Exception e) {
             logger.warn("Could not serialize command reply [{}]. Sending back NULL.", commandResultMessage, e);
-            return new SpringHttpReplyMessage<>(commandMessage.getIdentifier(), asCommandResultMessage(e), serializer);
+            return new SpringHttpReplyMessage<>(commandIdentifier, asCommandResultMessage(e), serializer);
         }
+    }
+
+    private static CompletableFuture<Object> exceptionallyCompleted(Exception e) {
+        CompletableFuture<Object> result = new CompletableFuture<>();
+        result.completeExceptionally(e);
+        return result;
     }
 
     @Override
