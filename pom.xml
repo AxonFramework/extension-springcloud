@@ -30,9 +30,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <name>Axon Framework - Spring Cloud Extension</name>
-    <description>
-        An Axon Framework extension allowing Spring Cloud integration.
-    </description>
+    <description>An Axon Framework extension enabling Spring Cloud integration.</description>
 
     <inceptionYear>2010</inceptionYear>
     <url>http://www.axonframework.org</url>
@@ -55,23 +53,36 @@
         </sonar.coverage.jacoco.xmlReportPaths>
 
         <axon.version>4.8.0</axon.version>
-        <spring-cloud-release.version>2021.0.7</spring-cloud-release.version>
 
         <spring.version>5.3.28</spring.version>
-        <spring.boot.version>2.7.13</spring.boot.version>
+        <spring-boot.version>2.7.13</spring-boot.version>
+        <spring-cloud-release.version>2021.0.7</spring-cloud-release.version>
 
         <slf4j.version>2.0.3</slf4j.version>
         <log4j.version>2.20.0</log4j.version>
 
-        <mockito.version>4.11.0</mockito.version>
-        <jackson.version>2.13.4</jackson.version>
-        <commons-io.version>2.13.0</commons-io.version>
-        <javax.jaxb-api.version>2.3.1</javax.jaxb-api.version>
-        <guava-collections.version>r03</guava-collections.version>
-        <junit.jupiter.version>5.9.1</junit.jupiter.version>
         <findbugs-jsr305.version>3.0.2</findbugs-jsr305.version>
+        <jackson.version>2.13.4</jackson.version>
 
-        <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
+        <commons-io.version>2.13.0</commons-io.version>
+        <guava-collections.version>r03</guava-collections.version>
+        <javax-jaxb-api.version>2.3.1</javax-jaxb-api.version>
+        <junit-jupiter.version>5.9.1</junit-jupiter.version>
+        <mockito.version>4.11.0</mockito.version>
+
+        <jacoco-maven.version>0.8.8</jacoco-maven.version>
+        <maven-assembly.version>3.6.0</maven-assembly.version>
+        <maven-clean.version>3.3.1</maven-clean.version>
+        <maven-compiler.version>3.11.0</maven-compiler.version>
+        <maven-deploy.version>3.0.0</maven-deploy.version>
+        <maven-enforcer.version>3.3.0</maven-enforcer.version>
+        <maven-install.version>3.1.1</maven-install.version>
+        <maven-jar.version>3.3.0</maven-jar.version>
+        <maven-javadoc.version>3.5.0</maven-javadoc.version>
+        <maven-release.version>3.0.1</maven-release.version>
+        <maven-sources.version>3.3.0</maven-sources.version>
+        <maven-surefire.version>2.22.2</maven-surefire.version>
+        <maven-resources.version>3.3.1</maven-resources.version>
     </properties>
 
     <dependencies>
@@ -82,7 +93,6 @@
             <version>${spring.version}</version>
             <scope>test</scope>
         </dependency>
-
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -156,24 +166,16 @@
         </dependency>
 
         <dependency>
-            <!-- Not pat of Java 9 by default. Adding it as a dependency makes it compatible with Java 8 -->
+            <!-- Not part of Java 9 by default. Adding it as a dependency makes it compatible with Java 8 -->
             <groupId>javax.xml.bind</groupId>
             <artifactId>jaxb-api</artifactId>
-            <version>${javax.jaxb-api.version}</version>
+            <version>${javax-jaxb-api.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
 
     <dependencyManagement>
         <dependencies>
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-dependencies</artifactId>
-                <version>${spring-cloud-release.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
             <dependency>
                 <groupId>org.springframework</groupId>
                 <artifactId>spring-context</artifactId>
@@ -183,13 +185,21 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-configuration-processor</artifactId>
-                <version>${spring.boot.version}</version>
+                <version>${spring-boot.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter</artifactId>
-                <version>${spring.boot.version}</version>
+                <version>${spring-boot.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud-release.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
 
             <dependency>
@@ -201,7 +211,7 @@
             <dependency>
                 <groupId>org.junit.jupiter</groupId>
                 <artifactId>junit-jupiter</artifactId>
-                <version>${junit.jupiter.version}</version>
+                <version>${junit-jupiter.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
@@ -222,71 +232,40 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-clean-plugin</artifactId>
-                    <version>3.3.1</version>
+                    <version>${maven-clean.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-install-plugin</artifactId>
-                    <version>3.1.1</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.jacoco</groupId>
-                    <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>${jacoco-maven-plugin.version}</version>
+                    <version>${maven-install.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.22.2</version>
+                    <version>${maven-surefire.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco-maven.version}</version>
                 </plugin>
             </plugins>
         </pluginManagement>
+
         <plugins>
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.3.1</version>
-                <configuration>
-                    <encoding>UTF-8</encoding>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>3.0.0</version>
-            </plugin>
+            <!-- compile -->
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                <version>${maven-compiler.version}</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.6.0</version>
-                <configuration>
-                    <descriptorSourceDirectory>assembly</descriptorSourceDirectory>
-                    <archiverConfig>
-                        <duplicateBehavior>skip</duplicateBehavior>
-                    </archiverConfig>
-                </configuration>
-            </plugin>
-            <plugin>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>3.0.1</version>
-                <configuration>
-                    <mavenExecutorId>forked-path</mavenExecutorId>
-                    <localCheckout>true</localCheckout>
-                    <pushChanges>false</pushChanges>
-                    <releaseProfiles>release-sign-artifacts</releaseProfiles>
-                    <tagNameFormat>axon-springcloud-@{project.version}</tagNameFormat>
-                </configuration>
-            </plugin>
+            <!-- test -->
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
                 <configuration>
                     <includes>
                         <include>**/*Test.java</include>
@@ -300,9 +279,21 @@
                     </systemPropertyVariables>
                 </configuration>
             </plugin>
+            <!-- package -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>${maven-assembly.version}</version>
+                <configuration>
+                    <descriptorSourceDirectory>assembly</descriptorSourceDirectory>
+                    <archiverConfig>
+                        <duplicateBehavior>skip</duplicateBehavior>
+                    </archiverConfig>
+                </configuration>
+            </plugin>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>${maven-jar.version}</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -312,21 +303,8 @@
                 </configuration>
             </plugin>
             <plugin>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>3.3.0</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>jar-no-fork</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.5.0</version>
+                <version>${maven-javadoc.version}</version>
                 <executions>
                     <execution>
                         <id>attach-javadoc</id>
@@ -341,9 +319,27 @@
                 </configuration>
             </plugin>
             <plugin>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>${maven-sources.version}</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- deploy -->
+            <plugin>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>${maven-deploy.version}</version>
+            </plugin>
+            <plugin>
                 <!-- just to make sure deployed artifacts are always built (and tested) using JDK 8+ -->
                 <artifactId>maven-enforcer-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>${maven-enforcer.version}</version>
                 <executions>
                     <execution>
                         <id>enforce-java</id>
@@ -363,6 +359,24 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>${maven-release.version}</version>
+                <configuration>
+                    <mavenExecutorId>forked-path</mavenExecutorId>
+                    <localCheckout>true</localCheckout>
+                    <pushChanges>false</pushChanges>
+                    <releaseProfiles>release-sign-artifacts</releaseProfiles>
+                    <tagNameFormat>axon-springcloud-@{project.version}</tagNameFormat>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>${maven-resources.version}</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -499,7 +513,25 @@
             <organization>AxonIQ</organization>
             <organizationUrl>https://axoniq.io</organizationUrl>
             <roles>
-                <role>Committer</role>
+                <role>Lead Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Gerard Klijs</name>
+            <email>gerard.klijs@axoniq.io</email>
+            <organization>AxonIQ</organization>
+            <organizationUrl>https://axoniq.io</organizationUrl>
+            <roles>
+                <role>Developer</role>
+            </roles>
+        </developer>
+        <developer>
+            <name>Mitchell Herrijgers</name>
+            <email>mitchell.herrijgers@axoniq.io</email>
+            <organization>AxonIQ</organization>
+            <organizationUrl>https://axoniq.io</organizationUrl>
+            <roles>
+                <role>Developer</role>
             </roles>
         </developer>
     </developers>
