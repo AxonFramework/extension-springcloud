@@ -19,7 +19,7 @@
 
     <groupId>org.axonframework.extensions.springcloud</groupId>
     <artifactId>axon-springcloud-parent</artifactId>
-    <version>4.8.0-SNAPSHOT</version>
+    <version>4.8.0</version>
     <modules>
         <module>springcloud</module>
         <module>springcloud-spring-boot-autoconfigure</module>
@@ -480,7 +480,7 @@
         <connection>scm:git:git://github.com/AxonFramework/extension-springcloud.git</connection>
         <developerConnection>scm:git:git@github.com:AxonFramework/extension-springcloud.git</developerConnection>
         <url>https://github.com/AxonFramework/extension-springcloud</url>
-        <tag>HEAD</tag>
+        <tag>axon-springcloud-4.8.0</tag>
     </scm>
 
     <developers>
