@@ -281,7 +281,8 @@
                     <mavenExecutorId>forked-path</mavenExecutorId>
                     <localCheckout>true</localCheckout>
                     <pushChanges>false</pushChanges>
-<!--                    <releaseProfiles>release-sign-artifacts</releaseProfiles>-->
+                    <releaseProfiles>release-sign-artifacts</releaseProfiles>
+                    <tagNameFormat>axon-springcloud-@{project.version}</tagNameFormat>
                 </configuration>
             </plugin>
             <plugin>
