@@ -11,7 +11,7 @@ updates:
   reviewers:
     - "smcvb" # Main
     - "gklijs"
-  milestone: 10
+  milestone: 11
 - package-ecosystem: maven
   directory: "/"
   schedule:
@@ -23,4 +23,4 @@ updates:
   reviewers:
     - "smcvb" # Main
     - "gklijs"
-  milestone: 10
+  milestone: 11
