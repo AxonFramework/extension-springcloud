@@ -39,7 +39,7 @@
 
     <properties>
         <spring-cloud.version>2022.0.3</spring-cloud.version>
-        <testcoontainers.version>1.18.3</testcoontainers.version>
+        <testcoontainers.version>1.19.0</testcoontainers.version>
 
         <jar-plugin.version>3.3.0</jar-plugin.version>
         <jacoco-plugin.version>0.8.8</jacoco-plugin.version>
