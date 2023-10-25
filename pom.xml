@@ -59,7 +59,7 @@
         <spring-cloud-release.version>2021.0.8</spring-cloud-release.version>
 
         <slf4j.version>2.0.3</slf4j.version>
-        <log4j.version>2.21.0</log4j.version>
+        <log4j.version>2.21.1</log4j.version>
 
         <findbugs-jsr305.version>3.0.2</findbugs-jsr305.version>
         <jackson.version>2.13.4</jackson.version>
