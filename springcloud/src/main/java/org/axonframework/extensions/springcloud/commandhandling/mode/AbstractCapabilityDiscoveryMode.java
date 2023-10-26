@@ -79,6 +79,14 @@ public abstract class AbstractCapabilityDiscoveryMode<B extends CapabilityDiscov
         protected abstract void validate();
     }
 
+    /**
+     * This no-op version of the {@link DefaultServiceInstance} enforces the {@link ServiceInstance#getUri()} to a fixed
+     * empty {@link URI}. Through this, there's always a {@code ServiceInstance} present that will never match others.
+     * <p>
+     * This no-op version is the default local {@code ServiceInstance}, ensuring that when
+     * {@link #updateLocalCapabilities(ServiceInstance, int, CommandMessageFilter)} is never invoked (when an instance
+     * has zero command handlers) it will still play nicely in the discovery mechanism.
+     */
     private static class NoopUriServiceInstance extends DefaultServiceInstance {
 
         private static final ServiceInstance INSTANCE = new NoopUriServiceInstance();
