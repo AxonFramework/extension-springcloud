@@ -122,7 +122,6 @@ class RestCapabilityDiscoveryModeTest {
     @Test
     void testCapabilitiesGetsCapabilitiesThroughRestTemplate() {
         MemberCapabilities expectedCapabilities = new DefaultMemberCapabilities(LOAD_FACTOR, COMMAND_MESSAGE_FILTER);
-        testSubject.updateLocalCapabilities(localInstance, LOAD_FACTOR, COMMAND_MESSAGE_FILTER);
 
         URI testURI = URI.create("http://remote");
         ServiceInstance testServiceInstance = mock(ServiceInstance.class);
