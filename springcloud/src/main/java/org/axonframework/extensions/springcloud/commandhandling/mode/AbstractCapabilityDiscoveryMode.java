@@ -18,8 +18,10 @@ package org.axonframework.extensions.springcloud.commandhandling.mode;
 
 import org.axonframework.commandhandling.distributed.CommandMessageFilter;
 import org.axonframework.common.AxonConfigurationException;
+import org.springframework.cloud.client.DefaultServiceInstance;
 import org.springframework.cloud.client.ServiceInstance;
 
+import java.net.URI;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -42,7 +44,7 @@ public abstract class AbstractCapabilityDiscoveryMode<B extends CapabilityDiscov
      */
     protected AbstractCapabilityDiscoveryMode(Builder<B> builder) {
         builder.validate();
-        localInstance = new AtomicReference<>();
+        localInstance = new AtomicReference<>(NoopUriServiceInstance.INSTANCE);
         localCapabilities = new AtomicReference<>(DefaultMemberCapabilities.INCAPABLE_MEMBER);
     }
 
@@ -75,5 +77,16 @@ public abstract class AbstractCapabilityDiscoveryMode<B extends CapabilityDiscov
          *                                    specifications
          */
         protected abstract void validate();
+    }
+
+    private static class NoopUriServiceInstance extends DefaultServiceInstance {
+
+        private static final ServiceInstance INSTANCE = new NoopUriServiceInstance();
+        private static final URI FIXED_URI = URI.create("");
+
+        @Override
+        public URI getUri() {
+            return FIXED_URI;
+        }
     }
 }
