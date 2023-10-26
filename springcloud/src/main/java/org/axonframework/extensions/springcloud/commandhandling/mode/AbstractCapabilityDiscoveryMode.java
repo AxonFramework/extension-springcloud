@@ -44,7 +44,7 @@ public abstract class AbstractCapabilityDiscoveryMode<B extends CapabilityDiscov
      */
     protected AbstractCapabilityDiscoveryMode(Builder<B> builder) {
         builder.validate();
-        localInstance = new AtomicReference<>(NoopUriServiceInstance.INSTANCE);
+        localInstance = new AtomicReference<>(FixedURIServiceInstance.INSTANCE);
         localCapabilities = new AtomicReference<>(DefaultMemberCapabilities.INCAPABLE_MEMBER);
     }
 
@@ -87,9 +87,9 @@ public abstract class AbstractCapabilityDiscoveryMode<B extends CapabilityDiscov
      * {@link #updateLocalCapabilities(ServiceInstance, int, CommandMessageFilter)} is never invoked (when an instance
      * has zero command handlers) it will still play nicely in the discovery mechanism.
      */
-    private static class NoopUriServiceInstance extends DefaultServiceInstance {
+    private static class FixedURIServiceInstance extends DefaultServiceInstance {
 
-        private static final ServiceInstance INSTANCE = new NoopUriServiceInstance();
+        private static final ServiceInstance INSTANCE = new FixedURIServiceInstance();
         private static final URI FIXED_URI = URI.create("");
 
         @Override
