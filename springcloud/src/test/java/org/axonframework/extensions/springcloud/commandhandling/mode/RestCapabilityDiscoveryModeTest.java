@@ -66,7 +66,7 @@ class RestCapabilityDiscoveryModeTest {
     }
 
     @Test
-    void testGetLocalMemberCapabilitiesReturnsIncapableMemberIfLocalCapabilitiesIsNeverUpdated() {
+    void getLocalMemberCapabilitiesReturnsIncapableMemberIfLocalCapabilitiesIsNeverUpdated() {
         SerializedMemberCapabilities result = ((RestCapabilityDiscoveryMode) testSubject).getLocalMemberCapabilities();
 
         DefaultMemberCapabilities deserializableResult =
@@ -76,7 +76,7 @@ class RestCapabilityDiscoveryModeTest {
     }
 
     @Test
-    void testGetLocalMemberCapabilitiesReturnsUpdatedLocalCapabilities() {
+    void getLocalMemberCapabilitiesReturnsUpdatedLocalCapabilities() {
         testSubject.updateLocalCapabilities(localInstance, LOAD_FACTOR, COMMAND_MESSAGE_FILTER);
 
         SerializedMemberCapabilities result = ((RestCapabilityDiscoveryMode) testSubject).getLocalMemberCapabilities();
@@ -88,7 +88,7 @@ class RestCapabilityDiscoveryModeTest {
     }
 
     @Test
-    void testCapabilitiesReturnsLocalCapabilitiesIfLocalServiceInstanceIsUsed() {
+    void capabilitiesReturnsLocalCapabilitiesIfLocalServiceInstanceIsUsed() {
         testSubject.updateLocalCapabilities(localInstance, LOAD_FACTOR, COMMAND_MESSAGE_FILTER);
 
         Optional<MemberCapabilities> resultCapabilities = testSubject.capabilities(localInstance);
@@ -101,7 +101,7 @@ class RestCapabilityDiscoveryModeTest {
     }
 
     @Test
-    void testCapabilitiesReturnsLocalCapabilitiesIfServiceInstanceUriMatches() {
+    void capabilitiesReturnsLocalCapabilitiesIfServiceInstanceUriMatches() {
         URI testURI = URI.create("http://remote");
         when(localInstance.getUri()).thenReturn(testURI);
 
@@ -120,9 +120,8 @@ class RestCapabilityDiscoveryModeTest {
     }
 
     @Test
-    void testCapabilitiesGetsCapabilitiesThroughRestTemplate() {
+    void capabilitiesGetsCapabilitiesThroughRestTemplate() {
         MemberCapabilities expectedCapabilities = new DefaultMemberCapabilities(LOAD_FACTOR, COMMAND_MESSAGE_FILTER);
-        testSubject.updateLocalCapabilities(localInstance, LOAD_FACTOR, COMMAND_MESSAGE_FILTER);
 
         URI testURI = URI.create("http://remote");
         ServiceInstance testServiceInstance = mock(ServiceInstance.class);
@@ -158,7 +157,7 @@ class RestCapabilityDiscoveryModeTest {
     }
 
     @Test
-    void testCapabilitiesRethrowsHttpClientErrorExceptionAsServiceInstanceClientException() {
+    void capabilitiesRethrowsHttpClientErrorExceptionAsServiceInstanceClientException() {
         testSubject.updateLocalCapabilities(localInstance, LOAD_FACTOR, COMMAND_MESSAGE_FILTER);
 
         when(restTemplate.exchange(
@@ -182,7 +181,7 @@ class RestCapabilityDiscoveryModeTest {
     }
 
     @Test
-    void testCapabilitiesReturnsIncapableMemberWhenNonHttpClientErrorExceptionIsThrown() {
+    void capabilitiesReturnsIncapableMemberWhenNonHttpClientErrorExceptionIsThrown() {
         testSubject.updateLocalCapabilities(localInstance, LOAD_FACTOR, COMMAND_MESSAGE_FILTER);
 
         when(restTemplate.exchange(
