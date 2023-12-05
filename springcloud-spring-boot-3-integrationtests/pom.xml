@@ -43,7 +43,7 @@
         <testcoontainers.version>1.19.3</testcoontainers.version>
 
         <jar-plugin.version>3.3.0</jar-plugin.version>
-        <jacoco-plugin.version>0.8.8</jacoco-plugin.version>
+        <jacoco-plugin.version>0.8.11</jacoco-plugin.version>
     </properties>
 
     <dependencies>
