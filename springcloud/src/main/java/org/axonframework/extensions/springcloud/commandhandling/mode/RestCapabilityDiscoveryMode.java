@@ -147,7 +147,7 @@ public class RestCapabilityDiscoveryMode extends AbstractCapabilityDiscoveryMode
 
         private Supplier<Serializer> serializerSupplier = XStreamSerializer::defaultSerializer;
         private RestTemplate restTemplate;
-        private String messageCapabilitiesEndpoint = "/member-capabilities}";
+        private String messageCapabilitiesEndpoint = "/member-capabilities";
 
         /**
          * Sets the {@link Serializer} used to de-/serialize the {@link CommandMessageFilter}. Defaults to the {@link
