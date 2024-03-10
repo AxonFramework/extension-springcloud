@@ -40,7 +40,7 @@
     <properties>
         <axon.version>4.9.0</axon.version>
         <spring-cloud.version>2023.0.0</spring-cloud.version>
-        <testcoontainers.version>1.19.6</testcoontainers.version>
+        <testcoontainers.version>1.19.7</testcoontainers.version>
 
         <jar-plugin.version>3.3.0</jar-plugin.version>
         <jacoco-plugin.version>0.8.11</jacoco-plugin.version>
