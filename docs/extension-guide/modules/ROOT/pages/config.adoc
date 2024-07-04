@@ -1,0 +1,95 @@
+:navtitle: Configuring This Extension
+= Configuring This Extension
+
+Chances are high that you will be using Spring Boot if you are also using Spring Cloud. As configuring goes, this would opt for usage of the `axon-springcloud-spring-boot-starter` dependency to automatically retrieve all required beans. In either case, your application should be marked to enable it as a discoverable service through Spring Cloud. This can, for example, be done by annotating the main class with `@EnableDiscoveryClient`.
+
+There are still quite a few customizable components. For some suggestions, take a look at the following examples:
+
+[tabs]
+======
+Custom Bean Configuration::
++
+[source,java]
+----
+// Custom Spring Boot app, enabling a 'DiscoveryClient' and 'Registration' through `@EnableDiscoveryClient`
+@EnableDiscoveryClient
+@SpringBootApplication
+public class MyApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(MyApplication.class, args);
+    }
+
+    @Bean
+    public CapabilityDiscoveryMode capabilityDiscoveryMode(RestTemplate restTemplate, Serializer serializer) {
+        return RestCapabilityDiscoveryMode.builder()
+                                          .restTemplate(restTemplate)
+                                          .serializer(serializer)
+                                          // Allows changing the endpoint used to find member capabilities
+                                          .messageCapabilitiesEndpoint(/* custom message information endpoint */)
+                                          .build();
+    }
+
+    @Bean
+    public CommandRouter springCloudCommandRouter(DiscoveryClient discoveryClient,
+                                                  Registration localServiceInstance,
+                                                  CapabilityDiscoveryMode capabilityDiscoveryMode) {
+        return SpringCloudCommandRouter.builder()
+                                       .discoveryClient(discoveryClient)
+                                       .routingStrategy(new AnnotationRoutingStrategy())
+                                       .localServiceInstance(localServiceInstance)
+                                       .capabilityDiscoveryMode(capabilityDiscoveryMode)
+                                       .serviceInstanceFilter(/* custom ServiceInstance filter */)
+                                       .consistentHashChangeListener(/* ConsistentHash change listener */)
+                                       .build();
+    }
+
+    // Only required if Axon Spring Boot Starter is not used
+    @Bean
+    @Qualifier("localSegment")
+    public CommandBus localSegment() {
+        return SimpleCommandBus.builder().build();
+    }
+
+    @Bean
+    public CommandBusConnector springHttpCommandBusConnector(@Qualifier("localSegment") CommandBus localSegment,
+                                                             RestOperations restOperations,
+                                                             Serializer serializer) {
+        return SpringHttpCommandBusConnector.builder()
+                                            .localCommandBus(localSegment)
+                                            .restOperations(restOperations)
+                                            .serializer(serializer)
+                                            .executor(/* custom Executor */)
+                                            .build();
+    }
+
+    @Bean
+    @Primary
+    public DistributedCommandBus distributedCommandBus(CommandRouter commandRouter,
+                                                       CommandBusConnector commandBusConnector) {
+        return DistributedCommandBus.builder()
+                                    .commandRouter(commandRouter)
+                                    .connector(commandBusConnector)
+                                    .build();
+    }
+}
+----
+
+Spring Boot AutoConfiguration::
++
+[source,properties]
+----
+# Required to enabled the DistributedCommandBus
+axon.distributed.enabled=true
+# Defines the load factor used for this segment. Defaults to 100
+axon.distributed.load-factor=100
+# Defines the CapabilityDiscoveryMode used. Defaults to REST
+axon.distributed.spring-cloud.mode=rest
+# Defines the endpoint used to retrieve member capabilities from. Defaults to "/member-capabilities"
+axon.distributed.spring-cloud.rest-mode-url="/my-custom-endpoint"
+# Defines whether the CapabilityDiscoveryMode should be decorated to ignore faulty ServiceInstances
+axon.distributed.spring-cloud.enable-ignore-listing=true
+# Defines whether the CapabilityDiscoveryMode should be decorated to accept all types of commands
+axon.distributed.spring-cloud.enable-accept-all-commands=true
+----
+======

@@ -1,0 +1,37 @@
+:navtitle: Discovering Command Routes
+= Discovering Command Routes
+
+The `SpringCloudCommandRouter` uses Spring Cloud's discovery mechanism to find the other nodes in the cluster. To that end it uses the `DiscoveryClient` and `Registration` from Spring Cloud. These are respectively used to gather remote command routing information and maintain local information. The most straightforward way to retrieve both is by annotating your application with `@EnableDiscoveryClient`.
+
+Gathering and storing the command routing information revolves around Spring Cloud's `ServiceInstances`. A `Registration` is just the local `ServiceInstance`, whereas the `DiscoveryClient` provides the API to find remote `ServiceInstances`. Furthermore, it is the `ServiceInstance` which provides us with the required information (for example, the URI) to retrieve a node's capabilities.
+
+[NOTE]
+.Spring Cloud's Heartbeat Requirement
+====
+When using the `SpringCloudCommandRouter`, make sure your Spring application has heartbeat events enabled. The heartbeat events published by a Spring Cloud application are the trigger to check if the set of `ServiceInstances` from the `DiscoveryClient` has been changed. Additionally, it is used to validate whether the command routing capabilities for known nodes has been altered.
+
+Thus, if heartbeat events are disabled, your instance will no longer be updated with the current command routing capabilities. If so, this will cause issues during command routing.
+====
+
+The logic to store the local capabilities and discovering the remote capabilities of a `ServiceInstance` is maintained in the `CapabilityDiscoveryMode`. It is thus the `CapabilityDiscoveryMode` which provides us the means to actually retrieve a `ServiceInstance` 's set of commands it can handle (if any). The sole full implementation provided of the `CapabilityDiscoveryMode`, is the `RestCapabilityDiscoveryMode`, using a `RestTemplate` and the `ServiceInstance` URI to invoke a configurable endpoint. This endpoint leads to the `MemberCapabilitiesController` which in turn exposes the `MemberCapabilities` on the `RestCapabilityDiscoveryMode` of that instance.
+
+There are decorators present for the `CapabilityDiscoveryMode`, providing two additional features:
+
+
+. `IgnoreListingDiscoveryMode` - a `CapabilityDiscoveryMode` decorator which on failure of retrieving the `MemberCapabilities` will place the given `ServiceInstance` on a list to be ignored for future validation. It thus effectively removes discoverable `ServiceInstances` from the set.
+
+. `AcceptAllCommandsDiscoveryMode` - a `CapabilityDiscoveryMode` decorator which regardless of what this instance can handle as commands, state it can handle anything. This decorator comes in handy if the nodes in the system are homogeneous (aka, everybody can handle the same set of commands).
+
+The `Registration`, `DiscoveryClient` and `CapabilityDiscoveryMode` are arguably the heart of the `SpringCloudCommandRouter`. There are, however, a couple of additional things you can configure for this router, which are the following:
+
+- `RoutingStrategy` - The component in charge of deciding which of the nodes receives the commands consistently. By default, a `AnnotationRoutingStrategy` is used (see xref:axon_framework_old_ref:axon-framework-commands:infrastructure.adoc#DistributedCommandBus[Distributing the Command Bus] for more).
+
+- A `ServiceInstance` filter - This `Predicate` is used to filter out `ServiceInstance` retrieved through the `DiscoveryClient`. For example, it allows the removal of instances which are known to not handle any command messages. This might be useful if you have several services within the Spring Cloud Discovery Service set up, which you do not ever want to take into account for command handling.
+
+- `ConsistentHashChangeListener` - Adding a consistent hash change listener provides you with the opportunity to perform a specific task if new nodes have been added to the known command handlers set.
+
+[NOTE]
+.Differing Command Capabilities per Node
+====
+It is not required for all nodes to have the same set of command handlers. You may use different segments for different command types altogether. The Distributed Command Bus will always choose a node to dispatch a command to the one that has support for that specific type of command.
+====
