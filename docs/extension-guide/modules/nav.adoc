@@ -1,0 +1,4 @@
+* xref::index.adoc[]
+** xref::command-routes.adoc[]
+** xref::internode-commands.adoc[]
+** xref::config.adoc[]
