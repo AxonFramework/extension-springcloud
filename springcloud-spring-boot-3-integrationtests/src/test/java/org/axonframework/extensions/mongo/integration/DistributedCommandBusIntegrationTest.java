@@ -43,23 +43,26 @@ import static org.junit.jupiter.api.Assertions.*;
 @Testcontainers
 class DistributedCommandBusIntegrationTest {
 
-    public static final DockerImageName EUREKA_SERVER_IMAGE =
-            DockerImageName.parse("springcloud/eureka:latest");
+    public static final DockerImageName CONSUL_AGENT_IMAGE = DockerImageName.parse("consul:1.15.4");
 
     private ApplicationContextRunner testApplicationContext;
 
+    @SuppressWarnings("resource")
     @Container
-    private static final GenericContainer EUREKA_SERVER_CONTAINER =
-            new GenericContainer(EUREKA_SERVER_IMAGE).withExposedPorts(8761);
+    private static final GenericContainer<?> CONSUL_AGENT_CONTAINER =
+            new GenericContainer<>(CONSUL_AGENT_IMAGE).withExposedPorts(8500);
 
     @BeforeEach
     void setUp() {
         testApplicationContext = new ApplicationContextRunner()
                 .withPropertyValues("axon.axonserver.enabled=false")
                 .withPropertyValues("axon.distributed.enabled=true")
-                .withPropertyValues("eureka.client.serviceUrl.defaultZone=http://localhost:"
-                                            + EUREKA_SERVER_CONTAINER.getMappedPort(8761) + "/eureka")
-                .withPropertyValues("eureka.instance.preferIpAddress=true")
+                .withPropertyValues(
+                        "spring.cloud.consul.host=" + CONSUL_AGENT_CONTAINER.getHost()
+                )
+                .withPropertyValues(
+                        "spring.cloud.consul.port=" + CONSUL_AGENT_CONTAINER.getMappedPort(8500)
+                )
                 .withPropertyValues("spring.application.name=test-app")
                 .withUserConfiguration(DefaultContext.class);
     }
@@ -90,28 +93,35 @@ class DistributedCommandBusIntegrationTest {
     }
 
     private void subscribeCommandHandler(DistributedCommandBus commandBus) {
+        //noinspection resource
         commandBus.subscribe("testCommand", e -> "correct");
     }
 
     private void executeCommand(DistributedCommandBus commandBus) {
-        Message message = new GenericMessage("hi");
-        CommandMessage command = new GenericCommandMessage(message, "testCommand");
+        Message<String> message = new GenericMessage<>("hi");
+        CommandMessage<String> command = new GenericCommandMessage<>(message, "testCommand");
         AtomicReference<String> result = new AtomicReference<>();
-        commandBus.dispatch(command, (commandMessage, commandResultMessage) -> {
-            result.set((String) commandResultMessage.getPayload());
-        });
-        await().atMost(Duration.ofSeconds(5)).until(() -> result.get() != null);
+        commandBus.dispatch(
+                command,
+                (commandMessage, commandResultMessage) -> result.set((String) commandResultMessage.getPayload())
+        );
+
+        await().atMost(Duration.ofSeconds(5))
+               .until(() -> result.get() != null);
         assertEquals("correct", result.get());
     }
 
     private void executeCommandWhileNotRegistered(DistributedCommandBus commandBus) {
-        Message message = new GenericMessage("hi");
-        CommandMessage command = new GenericCommandMessage(message, "anotherCommand");
+        Message<String> message = new GenericMessage<>("hi");
+        CommandMessage<String> command = new GenericCommandMessage<>(message, "anotherCommand");
         AtomicReference<Throwable> result = new AtomicReference<>();
-        commandBus.dispatch(command, (commandMessage, commandResultMessage) -> {
-            result.set(commandResultMessage.exceptionResult());
-        });
-        await().atMost(Duration.ofSeconds(5)).until(() -> result.get() != null);
+        commandBus.dispatch(
+                command,
+                (commandMessage, commandResultMessage) -> result.set(commandResultMessage.exceptionResult())
+        );
+
+        await().atMost(Duration.ofSeconds(5))
+               .until(() -> result.get() != null);
         assertTrue(result.get() instanceof NoHandlerForCommandException);
     }
 
