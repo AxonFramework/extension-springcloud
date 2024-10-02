@@ -24,7 +24,7 @@ There are decorators present for the `CapabilityDiscoveryMode`, providing two ad
 
 The `Registration`, `DiscoveryClient` and `CapabilityDiscoveryMode` are arguably the heart of the `SpringCloudCommandRouter`. There are, however, a couple of additional things you can configure for this router, which are the following:
 
-- `RoutingStrategy` - The component in charge of deciding which of the nodes receives the commands consistently. By default, a `AnnotationRoutingStrategy` is used (see xref:axon_framework_ref:axon-framework-commands:infrastructure.adoc#DistributedCommandBus[Distributing the Command Bus] for more).
+- `RoutingStrategy` - The component in charge of deciding which of the nodes receives the commands consistently. By default, a `AnnotationRoutingStrategy` is used (see xref:axon-framework-references:axon-framework-commands:infrastructure.adoc#DistributedCommandBus[Distributing the Command Bus] for more).
 
 - A `ServiceInstance` filter - This `Predicate` is used to filter out `ServiceInstance` retrieved through the `DiscoveryClient`. For example, it allows the removal of instances which are known to not handle any command messages. This might be useful if you have several services within the Spring Cloud Discovery Service set up, which you do not ever want to take into account for command handling.
 
