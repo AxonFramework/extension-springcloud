@@ -4,7 +4,7 @@ This folder contains the docs related to the Spring Cloud Extension for Axon Fra
 
 The following are the current documentation sources (folders):
 
-- `extension-guide` : [The Spring Cloud Extension Guide](https://library.axoniq.io/springcloud_extension_guide/index.html)
+- `extension-guide` : [The Spring Cloud Extension Guide](https://library.axoniq.io/spring-cloud-extension-reference/index.html)
 
 ## Contributing to the docs.
 
