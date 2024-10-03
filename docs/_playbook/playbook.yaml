@@ -1,6 +1,6 @@
 site:
   title: Spring Cloud Extension docs PREVIEW
-  start_page: springcloud_extension_guide::index.adoc
+  start_page: spring-cloud-extension-reference::index.adoc
 
 content:
   sources:

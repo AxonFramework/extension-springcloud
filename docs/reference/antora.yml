@@ -1,4 +1,4 @@
-name: springcloud_extension_guide
+name: spring-cloud-extension-reference
 title: Spring Cloud Extension Guide
 version: true
 prerelease: true
@@ -6,8 +6,8 @@ start_page: ROOT:index.adoc
 
 asciidoc:
   attributes:
-    component_description: The Spring Cloud Extension guide from the former reference guide
-    type: guide
+    component_description:  Extension adding Spring Cloud integration for command routing
+    type: extension-reference
     group: axon-framework
 
 nav:
