@@ -2,3 +2,4 @@
 ** xref::command-routes.adoc[]
 ** xref::internode-commands.adoc[]
 ** xref::config.adoc[]
+* xref::release-notes.adoc[]
