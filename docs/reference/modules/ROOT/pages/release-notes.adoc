@@ -1,10 +1,16 @@
 = Release Notes Spring Cloud Extension
 :navtitle: Release notes
 
-You can find the release notes for the Spring Cloud Extension of version 4.10.0 below.
+You can find the release notes for the Spring Cloud Extension of version 4.10.0 onward, below.
 For earlier releases, please go to the link:https://legacydocs.axoniq.io/reference-guide/release-notes/rn-extensions/rn-springcloud[legacy documentation].
 
-== Release 4.10
+== Release 4.11.0
+
+Upgrades the Spring Cloud Extension to be compatible with Axon Framework 4.11.0, and updates various dependencies.
+
+See the link:https://github.com/AxonFramework/extension-springcloud/releases/tag/axon-springcloud-4.11.0[GitHub release notes] for an exhaustive list of all changes.
+
+== Release 4.10.0
 
 Upgrades the Spring Cloud Extension to be compatible with Axon Framework 4.10.0, and updates various dependencies.
 
