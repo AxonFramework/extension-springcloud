@@ -57,7 +57,7 @@
 
     <profiles>
         <profile>
-            <id>release-sign-artifacts</id>
+            <id>sign</id>
             <activation>
                 <property>
                     <name>performRelease</name>
@@ -108,8 +108,13 @@
                 </configuration>
             </plugin>
             <plugin>
-                <artifactId>maven-deploy-plugin</artifactId>
-                <version>3.1.1</version>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.7.0</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                </configuration>
             </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -139,18 +144,6 @@
         </plugins>
     </build>
 
-    <distributionManagement>
-        <snapshotRepository>
-            <id>sonatype</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-            <uniqueVersion>true</uniqueVersion>
-        </snapshotRepository>
-        <repository>
-            <id>sonatype</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-            <uniqueVersion>false</uniqueVersion>
-        </repository>
-    </distributionManagement>
     <scm>
         <connection>scm:git:git://github.com/AxonFramework/extension-springcloud.git</connection>
         <developerConnection>scm:git:git@github.com:AxonFramework/extension-springcloud.git</developerConnection>
