@@ -62,7 +62,7 @@
         <log4j.version>2.24.3</log4j.version>
 
         <findbugs-jsr305.version>3.0.2</findbugs-jsr305.version>
-        <jackson.version>2.19.0</jackson.version>
+        <jackson.version>2.19.1</jackson.version>
 
         <commons-io.version>2.19.0</commons-io.version>
         <guava-collections.version>r03</guava-collections.version>
