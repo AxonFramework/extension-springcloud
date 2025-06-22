@@ -59,7 +59,7 @@
         <spring-cloud-release.version>2021.0.9</spring-cloud-release.version>
 
         <slf4j.version>2.0.3</slf4j.version>
-        <log4j.version>2.24.3</log4j.version>
+        <log4j.version>2.25.0</log4j.version>
 
         <findbugs-jsr305.version>3.0.2</findbugs-jsr305.version>
         <jackson.version>2.19.1</jackson.version>
@@ -70,7 +70,7 @@
         <junit-jupiter.version>5.13.1</junit-jupiter.version>
         <mockito.version>4.11.0</mockito.version>
         <!-- Build / Plugin -->
-        <central-publishing-maven-plugin.version>0.7.0</central-publishing-maven-plugin.version>
+        <central-publishing-maven-plugin.version>0.8.0</central-publishing-maven-plugin.version>
         <jacoco-maven.version>0.8.13</jacoco-maven.version>
         <maven-assembly.version>3.7.1</maven-assembly.version>
         <maven-clean.version>3.5.0</maven-clean.version>
