@@ -41,7 +41,7 @@
         <axon.version>4.11.2</axon.version>
         <spring-cloud.version>2023.0.3</spring-cloud.version>
         <spring-cloud-consul.version>4.3.0</spring-cloud-consul.version>
-        <testcoontainers.version>1.21.2</testcoontainers.version>
+        <testcoontainers.version>1.21.3</testcoontainers.version>
 
         <jar-plugin.version>3.4.2</jar-plugin.version>
         <jacoco-plugin.version>0.8.13</jacoco-plugin.version>
