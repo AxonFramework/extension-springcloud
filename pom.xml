@@ -62,9 +62,9 @@
         <log4j.version>2.25.1</log4j.version>
 
         <findbugs-jsr305.version>3.0.2</findbugs-jsr305.version>
-        <jackson.version>2.19.1</jackson.version>
+        <jackson.version>2.19.2</jackson.version>
 
-        <commons-io.version>2.19.0</commons-io.version>
+        <commons-io.version>2.20.0</commons-io.version>
         <guava-collections.version>r03</guava-collections.version>
         <javax-jaxb-api.version>2.3.1</javax-jaxb-api.version>
         <junit-jupiter.version>5.13.3</junit-jupiter.version>
@@ -75,7 +75,7 @@
         <maven-assembly.version>3.7.1</maven-assembly.version>
         <maven-clean.version>3.5.0</maven-clean.version>
         <maven-compiler.version>3.14.0</maven-compiler.version>
-        <maven-enforcer.version>3.6.0</maven-enforcer.version>
+        <maven-enforcer.version>3.6.1</maven-enforcer.version>
         <maven-gpg.version>3.2.8</maven-gpg.version>
         <maven-install.version>3.1.4</maven-install.version>
         <maven-jar.version>3.4.2</maven-jar.version>
