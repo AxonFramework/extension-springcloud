@@ -37,6 +37,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.autoconfigure.jmx.JmxAutoConfiguration;
 import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
 import org.springframework.boot.autoconfigure.web.reactive.function.client.WebClientAutoConfiguration;
+import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.discovery.simple.SimpleDiscoveryClient;
@@ -223,6 +224,45 @@ class SpringCloudAutoConfigurationTest {
             );
             assertTrue(delegate.getClass().isAssignableFrom(AcceptAllCommandsDiscoveryMode.class));
         });
+    }
+
+    @Test
+    void givenAxonSpringBootAutoconfigureNotOnTheClassPath_thenApplicationContextDoesNotFailToStart() {
+        testApplicationContext
+                .withPropertyValues("spring.autoconfigure.exclude=" +
+                        "org.axonframework.springboot.autoconfig.AvroSerializerAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.AxonAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.AxonTimeoutAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.AxonDbSchedulerAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.AxonJobRunrAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.AxonServerActuatorAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.AxonServerAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.AxonServerBusAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.AxonTracingAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.EventProcessingAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.InfraConfiguration," +
+                        "org.axonframework.springboot.autoconfig.InterceptorAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.JdbcAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.legacyjpa.JpaJavaxAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.legacyjpa.JpaJavaxEventStoreAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.JpaAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.JpaEventStoreAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.MetricsAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.MicrometerMetricsAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.NoOpTransactionAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.ObjectMapperAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.CBORMapperAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.OpenTelemetryAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.SecurityAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.TransactionAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.UpdateCheckerAutoConfiguration," +
+                        "org.axonframework.springboot.autoconfig.XStreamAutoConfiguration"
+                )
+                .withClassLoader(
+                        new FilteredClassLoader("org.axonframework.springboot")
+                ).run(context -> {
+                    assertThat(context).hasNotFailed();
+                });
     }
 
     @EnableAutoConfiguration(exclude = {

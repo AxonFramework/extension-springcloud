@@ -30,7 +30,6 @@ import org.axonframework.extensions.springcloud.commandhandling.mode.IgnoreListi
 import org.axonframework.extensions.springcloud.commandhandling.mode.MemberCapabilitiesController;
 import org.axonframework.extensions.springcloud.commandhandling.mode.RestCapabilityDiscoveryMode;
 import org.axonframework.serialization.Serializer;
-import org.axonframework.springboot.autoconfig.InfraConfiguration;
 import org.axonframework.tracing.SpanFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -61,7 +60,7 @@ import org.springframework.web.client.RestTemplate;
         RoutingStrategyAutoConfiguration.class,
         SimpleDiscoveryClientAutoConfiguration.class
 })
-@AutoConfigureBefore(InfraConfiguration.class)
+@AutoConfigureBefore(name = "org.axonframework.springboot.autoconfig.InfraConfiguration")
 @EnableConfigurationProperties(DistributedCommandBusProperties.class)
 @ConditionalOnProperty("axon.distributed.enabled")
 @ConditionalOnClass(name = {
