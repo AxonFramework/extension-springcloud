@@ -1,7 +1,13 @@
+> [!IMPORTANT]
+> ## 📦 This repository is archived
+>
+> The Spring Cloud extension has moved into **Axoniq Framework** and is no longer maintained here.
+> Please use the new location for the latest releases, issues and pull requests:
+>
+> - 💻 **Source code:** [`axoniq-springcloud` module in Axoniq Framework](https://github.com/AxonIQ/axoniq-framework/tree/main/connector/axoniq-springcloud)
+> - 📚 **Documentation:** - for [commands](https://docs.axoniq.io/axon-framework-reference/5.4/commands/infrastructure/#SpringCloudCommandBusConnector) and for [queries](https://docs.axoniq.io/axon-framework-reference/5.4/queries/infrastructure/#SpringCloudQueryBusConnector)
+
 # Axon Framework - Spring Cloud Extension
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.axonframework.extensions.springcloud/axon-springcloud/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.axonframework.extensions.springcloud/axon-springcloud/)
-![Build Status](https://github.com/AxonFramework/extension-springcloud/workflows/Spring%20Cloud%20Extension/badge.svg?branch=master)
-[![SonarCloud Status](https://sonarcloud.io/api/project_badges/measure?project=AxonFramework_extension-springcloud&metric=alert_status)](https://sonarcloud.io/dashboard?id=AxonFramework_extension-springcloud)
 
 Axon Framework is a framework for building evolutionary, event-driven microservice systems,
  based on the principles of Domain Driven Design, Command-Query Responsibility Segregation (CQRS) and Event Sourcing.
